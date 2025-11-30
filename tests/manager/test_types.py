@@ -1,6 +1,5 @@
 # tests/manager/test_types.py
 import pytest
-from typing import get_type_hints
 from ...manager.types import QueryParams, QueryResult, HistoryItem
 
 

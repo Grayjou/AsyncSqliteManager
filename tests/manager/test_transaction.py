@@ -1,6 +1,6 @@
 # tests/manager/test_transaction.py
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, AsyncMock
 from ...manager.transaction import Transaction
 from ...manager.exceptions import TransactionError
 
