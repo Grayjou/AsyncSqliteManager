@@ -45,7 +45,7 @@ from .types import (
     QueryResult,
     HistoryItem,
 )
-
+AsyncSQLiteManager = Manager
 
 __all__ = [
     # Main entry points

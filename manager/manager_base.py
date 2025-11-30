@@ -2,8 +2,6 @@ from __future__ import annotations
 from aiosqlite import connect, Connection as AioConnection
 from contextlib import asynccontextmanager
 import asyncio
-
-from .transaction import Transaction
 from .history import HistoryManager, default_history_format_function
 from .dbpathdict import DbPathDict
 from .types import QueryParams, QueryResult, HistoryItem
