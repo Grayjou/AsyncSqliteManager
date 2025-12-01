@@ -132,8 +132,8 @@ class ManagerBase:
     def _should_log(self, log: bool, override_omnilog: bool = False) -> bool:
         return log or (self.omni_log and not override_omnilog)
 
-    def _should_commit(self, commit: bool, override_autocommit: bool = False) -> bool:
-        return commit or (self.autocommit and not override_autocommit)
+    def _should_commit(self, commit: bool, override_autocommit: bool = False, mode: Literal["read", "write"] = "write") -> bool:
+        return (commit or (self.autocommit and not override_autocommit)) and mode == "write"
 
     def _call_logger(self, method: str, *args, **kwargs) -> None:
         if self.logger:
@@ -271,9 +271,8 @@ class ManagerBase:
 
         # commit logic:
 
-        if self._should_commit(commit, override_autocommit):
-            if mode == "read":
-                raise ConnectionError("Cannot commit on a read-only connection.")
+        if self._should_commit(commit, override_autocommit, mode=mode):
+
             await conn.commit()
             await self._append_history(
                 {
