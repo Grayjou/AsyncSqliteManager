@@ -239,12 +239,12 @@ class TestTransaction:
 
         txn = Transaction("test.db", manager=mock_manager)
         await txn.__aenter__()
-        
+
         # Execute multiple queries
         await txn.execute("CREATE TABLE test (id INTEGER)")
         await txn.execute("INSERT INTO test VALUES (1)")
         await txn.execute("SELECT * FROM test")
-        
+
         # All execute calls should use the same cursor
         assert mock_manager.execute.await_count == 3
         for call in mock_manager.execute.await_args_list:
@@ -264,12 +264,12 @@ class TestTransaction:
 
         txn = Transaction("test.db", manager=mock_manager)
         await txn.__aenter__()
-        
+
         # Verify cursor is stored
         assert txn._cursor is mock_cursor
-        
+
         await txn.__aexit__(None, None, None)
-        
+
         # Verify cursor is closed
         mock_cursor.close.assert_awaited_once()
         assert txn._cursor is None
@@ -286,10 +286,10 @@ class TestTransaction:
 
         txn = Transaction("test.db", manager=mock_manager)
         await txn.__aenter__()
-        
+
         with pytest.raises(Exception) as exc_info:
             await txn.__aexit__(None, None, None)
-        
+
         assert "Commit failed" in str(exc_info.value)
         # Cursor should still be closed
         mock_cursor.close.assert_awaited_once()
