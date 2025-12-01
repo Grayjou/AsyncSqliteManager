@@ -152,7 +152,8 @@ class ManagerBase:
         db_path: str,
         alias: Optional[str] = None,
         *,
-        create_read_connection: bool = False
+        create_read_connection: bool = False,
+        mode: Literal["read", "write"] = "write"
     ) -> AioConnection:
         """
         Connect to a SQLite database.
@@ -173,6 +174,11 @@ class ManagerBase:
                     pc.read_conn = await connect(db_path)
                 except Exception as e:
                     raise ConnectionError(f"Failed to create read connection to {db_path}: {e}") from e
+            
+            if mode == "read":
+                if pc.read_conn is None:
+                    raise ConnectionError(f"No read connection available for {db_path}")
+                return pc.read_conn
             return pc.write_conn
         
         try:
@@ -188,6 +194,10 @@ class ManagerBase:
                 alias=alias
             )
             self._db_dict[db_path] = pc
+            if mode == "read":
+                if pc.read_conn is None:
+                    raise ConnectionError(f"No read connection available for {db_path}")
+                return pc.read_conn
             return write_conn
         except Exception as e:
             raise ConnectionError(f"Failed to connect to {db_path}: {e}") from e
@@ -203,7 +213,9 @@ class ManagerBase:
         commit: bool = False,
         override_autocommit: bool = False,
         log: bool = False,
-        override_omnilog: bool = False
+        override_omnilog: bool = False,
+        mode : Literal["read", "write"] = "write",
+        create_read_connection: bool = True,
     ) -> QueryResult:
         """
         Execute a SQL query on the specified database.
@@ -224,7 +236,7 @@ class ManagerBase:
         Returns:
             Optional[List[Any]]: Query results, if any.
         """
-        conn = await self.connect(db_path)
+        conn = await self.connect(db_path, mode=mode, create_read_connection=create_read_connection and mode=="read")
         params = params or ()
 
         if cursor is not None:
@@ -258,7 +270,10 @@ class ManagerBase:
                 )
 
         # commit logic:
+
         if self._should_commit(commit, override_autocommit):
+            if mode == "read":
+                raise ConnectionError("Cannot commit on a read-only connection.")
             await conn.commit()
             await self._append_history(
                 {

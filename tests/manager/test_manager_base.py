@@ -486,3 +486,16 @@ class TestManagerBase:
         assert pc.read_conn is not pc.write_conn
         
         await manager.close(db_path)
+
+    @pytest.mark.asyncio
+    async def test_write_conn_isnot_read_conn(self, tmp_path):
+        """Test that write and read connections are different objects."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        await manager.connect(db_path, create_read_connection=True)
+        pc = manager.get_path_connection(db_path)
+        
+        assert pc.write_conn is not pc.read_conn
+        
+        await manager.close(db_path)
