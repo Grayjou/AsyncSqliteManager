@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Type
+from typing import Optional, Type, Literal
 from logging import Logger, getLogger as logging_getLogger
 from .types import QueryParams, QueryResult
 from .exceptions import TransactionError
@@ -84,7 +84,8 @@ class Transaction:
         commit: bool = False,
         override_autocommit: bool = False,
         log: bool = False,
-        override_omnilog: bool = False
+        override_omnilog: bool = False,
+        mode : Literal["read", "write"] = "write",
     ) -> QueryResult:
         return await self.manager.execute(
             db_path=self.database_path,
@@ -95,7 +96,8 @@ class Transaction:
             commit=commit,
             override_autocommit=override_autocommit,
             log=log,
-            override_omnilog=override_omnilog
+            override_omnilog=override_omnilog,
+            mode=mode,
         )
 
     async def commit(self, log: bool = False, override_omnilog: bool = False) -> None:
