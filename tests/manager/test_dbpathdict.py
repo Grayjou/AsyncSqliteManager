@@ -21,10 +21,12 @@ class TestPathConnection:
     """Tests for PathConnection class."""
 
     def test_init_with_path_and_conn(self, mock_conn):
-        """Test PathConnection initialization with path and connection."""
+        """Test PathConnection initialization with path and write_conn."""
         pc = PathConnection("test.db", mock_conn)
         assert pc.path == "test.db"
-        assert pc.conn is mock_conn
+        assert pc.write_conn is mock_conn
+        assert pc.conn is mock_conn  # Backwards compatibility
+        assert pc.read_conn is None
         assert pc.alias is None
 
     def test_init_with_alias(self, mock_conn):
@@ -32,19 +34,48 @@ class TestPathConnection:
         pc = PathConnection("test.db", mock_conn, alias="mydb")
         assert pc.path == "test.db"
         assert pc.alias == "mydb"
+        assert pc.write_conn is mock_conn
         assert pc.conn is mock_conn
 
-    def test_conn_dict_without_alias(self, mock_conn):
-        """Test conn_dict returns only path when no alias."""
-        pc = PathConnection("test.db", mock_conn)
-        result = pc.conn_dict()
-        assert result == {"test.db": mock_conn}
+    def test_init_with_read_conn(self, mock_conn):
+        """Test PathConnection initialization with separate read connection."""
+        read_conn = MagicMock(spec_set=['__class__'])
+        pc = PathConnection("test.db", mock_conn, read_conn=read_conn, alias="mydb")
+        assert pc.write_conn is mock_conn
+        assert pc.read_conn is read_conn
+        assert pc.conn is mock_conn  # conn is alias for write_conn
 
-    def test_conn_dict_with_alias(self, mock_conn):
-        """Test conn_dict returns both path and alias."""
-        pc = PathConnection("test.db", mock_conn, alias="mydb")
-        result = pc.conn_dict()
-        assert result == {"test.db": mock_conn, "mydb": mock_conn}
+    def test_conn_property_is_alias_for_write_conn(self, mock_conn):
+        """Test that conn property is an alias for write_conn."""
+        pc = PathConnection("test.db", mock_conn)
+        assert pc.conn is pc.write_conn
+        
+        # Test setter
+        new_conn = MagicMock(spec_set=['__class__'])
+        pc.conn = new_conn
+        assert pc.write_conn is new_conn
+        assert pc.conn is new_conn
+
+    def test_get_conn_write_mode(self, mock_conn):
+        """Test get_conn returns write_conn for write mode."""
+        pc = PathConnection("test.db", mock_conn)
+        assert pc.get_conn("write") is mock_conn
+
+    def test_get_conn_read_mode_with_read_conn(self, mock_conn):
+        """Test get_conn returns read_conn for read mode when available."""
+        read_conn = MagicMock(spec_set=['__class__'])
+        pc = PathConnection("test.db", mock_conn, read_conn=read_conn)
+        assert pc.get_conn("read") is read_conn
+
+    def test_get_conn_read_mode_fallback_to_write(self, mock_conn):
+        """Test get_conn falls back to write_conn when read_conn is None."""
+        pc = PathConnection("test.db", mock_conn)
+        assert pc.get_conn("read") is mock_conn
+
+    def test_get_conn_default_mode_is_write(self, mock_conn):
+        """Test get_conn defaults to write mode."""
+        pc = PathConnection("test.db", mock_conn)
+        assert pc.get_conn() is mock_conn
 
     def test_repr(self, mock_conn):
         """Test PathConnection string representation."""
@@ -53,31 +84,7 @@ class TestPathConnection:
         assert "test.db" in repr_str
         assert "mydb" in repr_str
         assert "PathConnection" in repr_str
-
-    def test_del_from_without_alias(self, mock_conn):
-        """Test del_from removes path from dictionary."""
-        pc = PathConnection("test.db", mock_conn)
-        d = {"test.db": mock_conn, "other.db": mock_conn}
-        pc.del_from(d)
-        assert "test.db" not in d
-        assert "other.db" in d
-
-    def test_del_from_with_alias(self, mock_conn):
-        """Test del_from removes both path and alias."""
-        pc = PathConnection("test.db", mock_conn, alias="mydb")
-        d = {"test.db": mock_conn, "mydb": mock_conn, "other.db": mock_conn}
-        pc.del_from(d)
-        assert "test.db" not in d
-        assert "mydb" not in d
-        assert "other.db" in d
-
-    def test_update_to(self, mock_conn):
-        """Test update_to adds connection to dictionary."""
-        pc = PathConnection("test.db", mock_conn, alias="mydb")
-        d = {}
-        pc.update_to(d)
-        assert d["test.db"] is mock_conn
-        assert d["mydb"] is mock_conn
+        assert "write_conn" in repr_str
 
     def test_eq_same_path(self, mock_conn):
         """Test equality comparison based on path."""
@@ -127,12 +134,11 @@ class TestDbPathDict:
         """Test DbPathDict initialization."""
         db_dict = DbPathDict()
         assert db_dict.path_connections == set()
-        assert db_dict.conn_dict == {}
 
     def test_get_connection_existing(self, aio_conn):
         """Test get_connection for existing path."""
         db_dict = DbPathDict()
-        db_dict.conn_dict["test.db"] = aio_conn
+        db_dict["test.db"] = aio_conn
         assert db_dict.get_connection("test.db") is aio_conn
 
     def test_get_connection_nonexistent(self):
@@ -140,11 +146,32 @@ class TestDbPathDict:
         db_dict = DbPathDict()
         assert db_dict.get_connection("nonexistent.db") is None
 
-    def test_getitem(self, aio_conn):
-        """Test __getitem__ returns connection."""
+    def test_get_connection_with_mode(self, aio_conn):
+        """Test get_connection with read/write mode."""
+        from aiosqlite import Connection as AioConnection
         db_dict = DbPathDict()
-        db_dict.conn_dict["test.db"] = aio_conn
-        assert db_dict["test.db"] is aio_conn
+        read_conn = MagicMock(spec=AioConnection)
+        pc = PathConnection("test.db", aio_conn, read_conn=read_conn)
+        db_dict["test.db"] = pc
+        
+        assert db_dict.get_connection("test.db", "write") is aio_conn
+        assert db_dict.get_connection("test.db", "read") is read_conn
+
+    def test_get_path_connection(self, aio_conn):
+        """Test get_path_connection returns PathConnection object."""
+        db_dict = DbPathDict()
+        db_dict["test.db"] = aio_conn
+        pc = db_dict.get_path_connection("test.db")
+        assert isinstance(pc, PathConnection)
+        assert pc.write_conn is aio_conn
+
+    def test_getitem(self, aio_conn):
+        """Test __getitem__ returns PathConnection."""
+        db_dict = DbPathDict()
+        db_dict["test.db"] = aio_conn
+        pc = db_dict["test.db"]
+        assert isinstance(pc, PathConnection)
+        assert pc.write_conn is aio_conn
 
     def test_getitem_nonexistent_raises_keyerror(self):
         """Test __getitem__ raises KeyError for nonexistent key."""
@@ -155,7 +182,7 @@ class TestDbPathDict:
     def test_contains_with_string(self, aio_conn):
         """Test __contains__ with string key."""
         db_dict = DbPathDict()
-        db_dict.conn_dict["test.db"] = aio_conn
+        db_dict["test.db"] = aio_conn
         assert "test.db" in db_dict
         assert "other.db" not in db_dict
 
@@ -167,15 +194,17 @@ class TestDbPathDict:
     def test_contains_with_path_connection(self, aio_conn):
         """Test __contains__ with PathConnection."""
         db_dict = DbPathDict()
-        db_dict.conn_dict["test.db"] = aio_conn
+        db_dict["test.db"] = aio_conn
         pc = PathConnection("test.db", aio_conn)
         assert pc in db_dict
 
     def test_get_with_default(self, aio_conn):
         """Test get returns default for nonexistent key."""
         db_dict = DbPathDict()
-        db_dict.conn_dict["test.db"] = aio_conn
-        assert db_dict.get("test.db") is aio_conn
+        db_dict["test.db"] = aio_conn
+        pc = db_dict.get("test.db")
+        assert pc is not None
+        assert pc.write_conn is aio_conn
         assert db_dict.get("nonexistent.db", "default") == "default"
         assert db_dict.get("nonexistent.db") is None
 
@@ -183,16 +212,29 @@ class TestDbPathDict:
         """Test __setitem__ with string key."""
         db_dict = DbPathDict()
         db_dict["test.db"] = aio_conn
-        assert "test.db" in db_dict.conn_dict
+        assert "test.db" in db_dict
         assert len(db_dict.path_connections) == 1
 
     def test_setitem_path_connection_key(self, aio_conn):
         """Test __setitem__ with PathConnection key."""
         db_dict = DbPathDict()
         pc = PathConnection("test.db", aio_conn, alias="mydb")
-        db_dict[pc] = aio_conn
-        assert "test.db" in db_dict.conn_dict
-        assert "mydb" in db_dict.conn_dict
+        db_dict[pc] = pc
+        assert "test.db" in db_dict
+        assert "mydb" in db_dict
+
+    def test_setitem_with_path_connection_value(self, aio_conn):
+        """Test __setitem__ with PathConnection value."""
+        from aiosqlite import Connection as AioConnection
+        db_dict = DbPathDict()
+        read_conn = MagicMock(spec=AioConnection)
+        pc = PathConnection("test.db", aio_conn, read_conn=read_conn, alias="mydb")
+        db_dict["test.db"] = pc
+        
+        stored_pc = db_dict["test.db"]
+        assert stored_pc.write_conn is aio_conn
+        assert stored_pc.read_conn is read_conn
+        assert stored_pc.alias == "mydb"
 
     def test_setitem_updates_existing(self, aio_conn):
         """Test __setitem__ updates existing connection."""
@@ -202,7 +244,8 @@ class TestDbPathDict:
         conn2 = MagicMock(spec=AioConnection)
         db_dict["test.db"] = conn1
         db_dict["test.db"] = conn2
-        assert db_dict["test.db"] is conn2
+        pc = db_dict["test.db"]
+        assert pc.write_conn is conn2
         assert len(db_dict.path_connections) == 1
 
     def test_setitem_empty_key_raises(self, aio_conn):
@@ -236,8 +279,10 @@ class TestDbPathDict:
         db_dict = DbPathDict()
         db_dict["test.db"] = aio_conn
         db_dict.setalias("test.db", "mydb")
-        assert db_dict["mydb"] is aio_conn
-        assert db_dict["test.db"] is aio_conn
+        pc_mydb = db_dict["mydb"]
+        pc_test = db_dict["test.db"]
+        assert pc_mydb is pc_test
+        assert pc_mydb.write_conn is aio_conn
 
     def test_setalias_update_existing(self, aio_conn):
         """Test setalias updates existing alias."""
@@ -246,7 +291,8 @@ class TestDbPathDict:
         db_dict.setalias("test.db", "alias1")
         db_dict.setalias("test.db", "alias2")
         assert "alias1" not in db_dict
-        assert db_dict["alias2"] is aio_conn
+        pc = db_dict["alias2"]
+        assert pc.write_conn is aio_conn
 
     def test_setalias_remove_alias(self, aio_conn):
         """Test setalias with None removes alias."""
@@ -254,7 +300,7 @@ class TestDbPathDict:
         db_dict["test.db"] = aio_conn
         db_dict.setalias("test.db", "mydb")
         db_dict.setalias("test.db", None)
-        assert "mydb" not in db_dict.conn_dict
+        assert "mydb" not in db_dict
 
     def test_setalias_nonexistent_key_raises(self):
         """Test setalias raises KeyError for nonexistent key."""

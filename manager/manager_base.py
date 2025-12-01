@@ -3,13 +3,13 @@ from aiosqlite import connect, Connection as AioConnection, Cursor as AioCursor
 from contextlib import asynccontextmanager
 import asyncio
 from .history import HistoryManager, default_history_format_function
-from .dbpathdict import DbPathDict
+from .dbpathdict import DbPathDict, PathConnection
 from .types import QueryParams, QueryResult, HistoryItem
 from .exceptions import ConnectionError
 
 from ..execution_async import try_query
 from ..log import ExecutionLog
-from typing import Optional, Callable, Any, Dict, Union, List
+from typing import Optional, Callable, Any, Dict, Union, List, Literal
 from logging import Logger, getLogger as logging_getLogger
 
 from ..async_history_dump import AsyncHistoryDumpGenerator
@@ -48,15 +48,46 @@ class ManagerBase:
     def _get_lock(self, db_path: str) -> asyncio.Lock:
         return self._locks.setdefault(db_path, asyncio.Lock())
 
-    def get_connection(self, path_or_alias: str) -> Optional[AioConnection]:
-        """Get the connection associated with a given path or alias."""
-        return self.db_dict.get(path_or_alias)
+    def get_connection(
+        self,
+        path_or_alias: str,
+        mode: Literal["read", "write"] = "write"
+    ) -> Optional[AioConnection]:
+        """
+        Get the connection associated with a given path or alias.
+        
+        Args:
+            path_or_alias: The path or alias of the database.
+            mode: "read" or "write", defaults to "write" for backwards compatibility.
+            
+        Returns:
+            The connection for the specified mode, or None if not found.
+        """
+        return self.db_dict.get_connection(path_or_alias, mode)
+
+    def get_path_connection(self, path_or_alias: str) -> Optional[PathConnection]:
+        """
+        Get the PathConnection object associated with a given path or alias.
+        
+        Args:
+            path_or_alias: The path or alias of the database.
+            
+        Returns:
+            The PathConnection object, or None if not found.
+        """
+        return self.db_dict.get_path_connection(path_or_alias)
 
     async def close(self, db_path: str) -> None:
-        """Close a database connection."""
+        """Close a database connection (both read and write connections)."""
         if db_path in self.db_dict:
-            conn = self.get_connection(db_path)
-            await conn.close() #type: ignore
+            pc = self.get_path_connection(db_path)
+            if pc:
+                # Close write connection
+                if pc.write_conn:
+                    await pc.write_conn.close()
+                # Close read connection if it exists and is different from write
+                if pc.read_conn and pc.read_conn is not pc.write_conn:
+                    await pc.read_conn.close()
             self._db_dict.__delitem__(db_path)
             self._locks.pop(db_path, None)
 
@@ -116,16 +147,42 @@ class ManagerBase:
     async def flush_history_to_file(self) -> None:
         await self._history_manager.flush_to_file()
 
-    async def connect(self, db_path: str, alias = None) -> AioConnection:
-        """Connect to a SQLite database."""
+    async def connect(
+        self,
+        db_path: str,
+        alias: Optional[str] = None,
+        *,
+        create_read_connection: bool = False
+    ) -> AioConnection:
+        """
+        Connect to a SQLite database.
+        
+        Args:
+            db_path: Path to the SQLite database file.
+            alias: Optional alias for the database path.
+            create_read_connection: If True, creates a separate read connection.
+            
+        Returns:
+            The write connection to the database.
+        """
         if db_path in self.db_dict:
-            return self.db_dict[db_path]
+            pc = self.db_dict[db_path]
+            return pc.write_conn
         
         try:
-            conn = await connect(db_path)
-            self._db_dict[db_path] = conn
-            self._db_dict.setalias(db_path, alias)
-            return conn
+            write_conn = await connect(db_path)
+            read_conn = None
+            if create_read_connection:
+                read_conn = await connect(db_path)
+            
+            pc = PathConnection(
+                path=db_path,
+                write_conn=write_conn,
+                read_conn=read_conn,
+                alias=alias
+            )
+            self._db_dict[db_path] = pc
+            return write_conn
         except Exception as e:
             raise ConnectionError(f"Failed to connect to {db_path}: {e}") from e
 
