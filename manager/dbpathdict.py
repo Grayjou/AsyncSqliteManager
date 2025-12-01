@@ -53,7 +53,7 @@ class PathConnection:
         """Alias for write_conn for backwards compatibility."""
         self.write_conn = value
 
-    def get_conn(self, mode: Literal["read", "write"] = "write") -> Optional[AioConnection]:
+    def get_conn(self, mode: Literal["read", "write"] = "write") -> AioConnection:
         """
         Get the connection for the specified mode.
         
@@ -61,7 +61,7 @@ class PathConnection:
             mode: "read" or "write", defaults to "write"
             
         Returns:
-            The connection for the specified mode, or None if not available.
+            The connection for the specified mode.
             For "read" mode, falls back to write_conn if read_conn is None.
         """
         if mode == "read":
@@ -212,14 +212,24 @@ class DbPathDict:
             raise ValueError("Value must be PathConnection or aiosqlite.Connection.")
 
         # Try to update existing PathConnection
+        preserved_alias = None
         for pc in list(self.path_connections):
             if key == pc.path or key == pc.alias or (isinstance(key, PathConnection) and key.path == pc.path):
                 self._remove_key_mapping(pc)
                 self.path_connections.remove(pc)
                 # Preserve alias if not specified in new_pc
                 if new_pc.alias is None and pc.alias is not None:
-                    new_pc.alias = pc.alias
+                    preserved_alias = pc.alias
                 break
+
+        # If we need to preserve an alias, create a new PathConnection with it
+        if preserved_alias is not None:
+            new_pc = PathConnection(
+                path=new_pc.path,
+                write_conn=new_pc.write_conn,
+                read_conn=new_pc.read_conn,
+                alias=preserved_alias
+            )
 
         self.path_connections.add(new_pc)
         self._update_key_mapping(new_pc)

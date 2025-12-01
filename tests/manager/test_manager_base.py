@@ -467,3 +467,22 @@ class TestManagerBase:
         
         # Both connections should be closed
         assert db_path not in manager.db_dict
+
+    @pytest.mark.asyncio
+    async def test_connect_creates_read_connection_on_existing(self, tmp_path):
+        """Test connect creates read connection for existing connection when requested."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        # First connect without read connection
+        await manager.connect(db_path, create_read_connection=False)
+        pc = manager.get_path_connection(db_path)
+        assert pc.read_conn is None
+        
+        # Second connect with read connection should create it
+        await manager.connect(db_path, create_read_connection=True)
+        pc = manager.get_path_connection(db_path)
+        assert pc.read_conn is not None
+        assert pc.read_conn is not pc.write_conn
+        
+        await manager.close(db_path)

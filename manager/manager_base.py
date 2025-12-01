@@ -167,6 +167,12 @@ class ManagerBase:
         """
         if db_path in self.db_dict:
             pc = self.db_dict[db_path]
+            # If read connection is requested but doesn't exist, create it
+            if create_read_connection and pc.read_conn is None:
+                try:
+                    pc.read_conn = await connect(db_path)
+                except Exception as e:
+                    raise ConnectionError(f"Failed to create read connection to {db_path}: {e}") from e
             return pc.write_conn
         
         try:
