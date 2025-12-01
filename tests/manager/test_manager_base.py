@@ -149,7 +149,9 @@ class TestManagerBase:
         manager = ManagerBase()
         
         conn = await manager.connect(db_path, alias="mydb")
-        assert manager.db_dict["mydb"] is conn
+        pc = manager.db_dict["mydb"]
+        assert pc.write_conn is conn
+        assert manager.get_connection("mydb") is conn
         
         await manager.close(db_path)
 
@@ -363,3 +365,124 @@ class TestManagerBase:
         with patch.object(manager._history_manager, 'flush_to_file', new_callable=AsyncMock) as mock_flush:
             await manager.flush_history_to_file()
             mock_flush.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_connect_with_read_connection(self, tmp_path):
+        """Test connect with create_read_connection=True creates separate read connection."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        write_conn = await manager.connect(db_path, create_read_connection=True)
+        pc = manager.get_path_connection(db_path)
+        
+        assert pc is not None
+        assert pc.write_conn is write_conn
+        assert pc.read_conn is not None
+        assert pc.read_conn is not pc.write_conn
+        
+        await manager.close(db_path)
+
+    @pytest.mark.asyncio
+    async def test_get_connection_with_mode(self, tmp_path):
+        """Test get_connection with mode parameter."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        write_conn = await manager.connect(db_path, create_read_connection=True)
+        
+        # Test write mode
+        assert manager.get_connection(db_path, mode="write") is write_conn
+        
+        # Test read mode - should return read connection
+        read_conn = manager.get_connection(db_path, mode="read")
+        assert read_conn is not None
+        assert read_conn is not write_conn
+        
+        await manager.close(db_path)
+
+    @pytest.mark.asyncio
+    async def test_get_connection_read_fallback_to_write(self, tmp_path):
+        """Test get_connection read mode falls back to write when no read connection."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        # Connect without read connection
+        write_conn = await manager.connect(db_path, create_read_connection=False)
+        
+        # Read mode should fall back to write connection
+        read_conn = manager.get_connection(db_path, mode="read")
+        assert read_conn is write_conn
+        
+        await manager.close(db_path)
+
+    @pytest.mark.asyncio
+    async def test_get_connection_default_mode_is_write(self, tmp_path):
+        """Test get_connection defaults to write mode."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        write_conn = await manager.connect(db_path, create_read_connection=True)
+        
+        # Default mode should be write
+        default_conn = manager.get_connection(db_path)
+        assert default_conn is write_conn
+        
+        await manager.close(db_path)
+
+    @pytest.mark.asyncio
+    async def test_get_path_connection(self, tmp_path):
+        """Test get_path_connection returns PathConnection object."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        await manager.connect(db_path, alias="mydb")
+        
+        # Access via path
+        pc_by_path = manager.get_path_connection(db_path)
+        assert pc_by_path is not None
+        assert pc_by_path.path == db_path
+        
+        # Access via alias
+        pc_by_alias = manager.get_path_connection("mydb")
+        assert pc_by_alias is pc_by_path
+        
+        # Non-existent returns None
+        assert manager.get_path_connection("nonexistent.db") is None
+        
+        await manager.close(db_path)
+
+    @pytest.mark.asyncio
+    async def test_close_closes_both_connections(self, tmp_path):
+        """Test close closes both read and write connections."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        await manager.connect(db_path, create_read_connection=True)
+        pc = manager.get_path_connection(db_path)
+        
+        write_conn = pc.write_conn
+        read_conn = pc.read_conn
+        
+        await manager.close(db_path)
+        
+        # Both connections should be closed
+        assert db_path not in manager.db_dict
+
+    @pytest.mark.asyncio
+    async def test_connect_creates_read_connection_on_existing(self, tmp_path):
+        """Test connect creates read connection for existing connection when requested."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        # First connect without read connection
+        await manager.connect(db_path, create_read_connection=False)
+        pc = manager.get_path_connection(db_path)
+        assert pc.read_conn is None
+        
+        # Second connect with read connection should create it
+        await manager.connect(db_path, create_read_connection=True)
+        pc = manager.get_path_connection(db_path)
+        assert pc.read_conn is not None
+        assert pc.read_conn is not pc.write_conn
+        
+        await manager.close(db_path)
