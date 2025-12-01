@@ -3,7 +3,7 @@ from typing import Optional, Type
 from logging import Logger, getLogger as logging_getLogger
 from .types import QueryParams, QueryResult
 from .exceptions import TransactionError
-from aiosqlite import Connection as AioConnection
+from aiosqlite import Connection as AioConnection, Cursor as AioCursor
 from .manager_base import ManagerBase
 
 class Transaction:
@@ -26,6 +26,7 @@ class Transaction:
         self.manager = manager
         self.logger = logger or logging_getLogger(__name__)
         self._connection: Optional[AioConnection] = None
+        self._cursor: Optional[AioCursor] = None
 
     async def __aenter__(self) -> Transaction:
         """Enter the transaction context."""
@@ -33,10 +34,17 @@ class Transaction:
         if self._connection is None:
             raise TransactionError(f"Failed to connect to database: {self.database_path}")
         
+        # Create a cursor for the transaction to reuse across multiple queries
+        self._cursor = await self._connection.cursor()
+        
         try:
-            await self._connection.execute("BEGIN")
+            await self._cursor.execute("BEGIN")
             self.logger.info(f"BEGIN transaction on database: {self.database_path}")
         except Exception as e:
+            # Close cursor on failure
+            if self._cursor:
+                await self._cursor.close()
+                self._cursor = None
             self.logger.error(f"Failed to BEGIN transaction: {e}")
             raise TransactionError(f"Failed to begin transaction: {e}") from e
             
@@ -62,6 +70,12 @@ class Transaction:
         except Exception as e:
             self.logger.error(f"Failed to commit/rollback transaction: {e}")
             raise
+        finally:
+            # Close the cursor when exiting the transaction
+            if self._cursor:
+                await self._cursor.close()
+                self._cursor = None
+
     async def execute(
         self,
         query: str,
@@ -77,6 +91,7 @@ class Transaction:
             query=query,
             params=params,
             return_type=return_type,
+            cursor=self._cursor,
             commit=commit,
             override_autocommit=override_autocommit,
             log=log,

@@ -42,14 +42,18 @@ class TestTransaction:
         """Test __aenter__ connects to database and begins transaction."""
         mock_manager = MagicMock()
         mock_conn = AsyncMock()
+        mock_cursor = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
         mock_manager.connect = AsyncMock(return_value=mock_conn)
 
         txn = Transaction("test.db", manager=mock_manager)
         result = await txn.__aenter__()
 
         mock_manager.connect.assert_awaited_once_with("test.db")
-        mock_conn.execute.assert_awaited_once_with("BEGIN")
+        mock_conn.cursor.assert_awaited_once()
+        mock_cursor.execute.assert_awaited_once_with("BEGIN")
         assert result is txn
+        assert txn._cursor is mock_cursor
 
     @pytest.mark.asyncio
     async def test_aenter_raises_if_connection_fails(self):
@@ -67,13 +71,17 @@ class TestTransaction:
         """Test __aenter__ raises TransactionError if BEGIN fails."""
         mock_manager = MagicMock()
         mock_conn = AsyncMock()
-        mock_conn.execute.side_effect = Exception("BEGIN failed")
+        mock_cursor = AsyncMock()
+        mock_cursor.execute.side_effect = Exception("BEGIN failed")
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
         mock_manager.connect = AsyncMock(return_value=mock_conn)
 
         txn = Transaction("test.db", manager=mock_manager)
         with pytest.raises(TransactionError) as exc_info:
             await txn.__aenter__()
         assert "Failed to begin transaction" in str(exc_info.value)
+        # Cursor should be closed on failure
+        mock_cursor.close.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_aexit_commits_on_success_with_autocommit(self):
@@ -81,6 +89,8 @@ class TestTransaction:
         mock_manager = MagicMock()
         mock_manager.commit = AsyncMock()
         mock_conn = AsyncMock()
+        mock_cursor = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
         mock_manager.connect = AsyncMock(return_value=mock_conn)
 
         txn = Transaction("test.db", autocommit=True, manager=mock_manager)
@@ -88,12 +98,15 @@ class TestTransaction:
         await txn.__aexit__(None, None, None)
 
         mock_manager.commit.assert_awaited_once_with("test.db")
+        mock_cursor.close.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_aexit_rollback_on_exception(self):
         """Test __aexit__ rolls back when exception occurred."""
         mock_manager = MagicMock()
         mock_conn = AsyncMock()
+        mock_cursor = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
         mock_manager.connect = AsyncMock(return_value=mock_conn)
 
         txn = Transaction("test.db", manager=mock_manager)
@@ -101,12 +114,15 @@ class TestTransaction:
         await txn.__aexit__(ValueError, ValueError("test"), None)
 
         mock_conn.rollback.assert_awaited_once()
+        mock_cursor.close.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_aexit_rollback_without_autocommit(self):
         """Test __aexit__ rolls back when autocommit=False and no exception."""
         mock_manager = MagicMock()
         mock_conn = AsyncMock()
+        mock_cursor = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
         mock_manager.connect = AsyncMock(return_value=mock_conn)
 
         txn = Transaction("test.db", autocommit=False, manager=mock_manager)
@@ -114,6 +130,7 @@ class TestTransaction:
         await txn.__aexit__(None, None, None)
 
         mock_conn.rollback.assert_awaited_once()
+        mock_cursor.close.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_aexit_logs_warning_if_no_connection(self):
@@ -131,8 +148,10 @@ class TestTransaction:
         """Test execute delegates to manager.execute."""
         mock_manager = MagicMock()
         mock_manager.execute = AsyncMock(return_value=[(1,)])
+        mock_cursor = AsyncMock()
 
         txn = Transaction("test.db", manager=mock_manager)
+        txn._cursor = mock_cursor
         result = await txn.execute("SELECT 1", params=(1,), return_type="fetchone")
 
         mock_manager.execute.assert_awaited_once_with(
@@ -140,6 +159,7 @@ class TestTransaction:
             query="SELECT 1",
             params=(1,),
             return_type="fetchone",
+            cursor=mock_cursor,
             commit=False,
             override_autocommit=False,
             log=False,
@@ -205,3 +225,72 @@ class TestTransaction:
         await txn.release_savepoint("sp1")
 
         mock_manager.release_savepoint.assert_awaited_once_with("test.db", "sp1")
+
+    @pytest.mark.asyncio
+    async def test_transaction_reuses_cursor_for_multiple_queries(self):
+        """Test that Transaction reuses the same cursor for multiple execute calls."""
+        mock_manager = MagicMock()
+        mock_manager.execute = AsyncMock(return_value=[])
+        mock_manager.commit = AsyncMock()
+        mock_conn = AsyncMock()
+        mock_cursor = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
+        mock_manager.connect = AsyncMock(return_value=mock_conn)
+
+        txn = Transaction("test.db", manager=mock_manager)
+        await txn.__aenter__()
+
+        # Execute multiple queries
+        await txn.execute("CREATE TABLE test (id INTEGER)")
+        await txn.execute("INSERT INTO test VALUES (1)")
+        await txn.execute("SELECT * FROM test")
+
+        # All execute calls should use the same cursor
+        assert mock_manager.execute.await_count == 3
+        for call in mock_manager.execute.await_args_list:
+            assert call.kwargs['cursor'] is mock_cursor
+
+        await txn.__aexit__(None, None, None)
+
+    @pytest.mark.asyncio
+    async def test_cursor_is_closed_on_aexit(self):
+        """Test that cursor is properly closed when exiting transaction."""
+        mock_manager = MagicMock()
+        mock_manager.commit = AsyncMock()
+        mock_conn = AsyncMock()
+        mock_cursor = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
+        mock_manager.connect = AsyncMock(return_value=mock_conn)
+
+        txn = Transaction("test.db", manager=mock_manager)
+        await txn.__aenter__()
+
+        # Verify cursor is stored
+        assert txn._cursor is mock_cursor
+
+        await txn.__aexit__(None, None, None)
+
+        # Verify cursor is closed
+        mock_cursor.close.assert_awaited_once()
+        assert txn._cursor is None
+
+    @pytest.mark.asyncio
+    async def test_cursor_is_closed_on_exception_during_aexit(self):
+        """Test that cursor is closed even when commit/rollback raises."""
+        mock_manager = MagicMock()
+        mock_manager.commit = AsyncMock(side_effect=Exception("Commit failed"))
+        mock_conn = AsyncMock()
+        mock_cursor = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
+        mock_manager.connect = AsyncMock(return_value=mock_conn)
+
+        txn = Transaction("test.db", manager=mock_manager)
+        await txn.__aenter__()
+
+        with pytest.raises(Exception) as exc_info:
+            await txn.__aexit__(None, None, None)
+
+        assert "Commit failed" in str(exc_info.value)
+        # Cursor should still be closed
+        mock_cursor.close.assert_awaited_once()
+        assert txn._cursor is None

@@ -212,3 +212,69 @@ class TestManager:
         
         # Shutdown
         await manager.shutdown()
+
+    @pytest.mark.asyncio
+    async def test_safe_transaction_multiple_queries(self, tmp_path):
+        """Test safe_transaction allows multiple queries without locking the database."""
+        db_path = str(tmp_path / "test.db")
+        manager = Manager()
+        
+        async with manager.safe_transaction(db_path) as txn:
+            # Create table and insert multiple rows in one transaction
+            await txn.execute("CREATE TABLE test (id INTEGER, value TEXT)")
+            await txn.execute("INSERT INTO test VALUES (?, ?)", (1, "first"))
+            await txn.execute("INSERT INTO test VALUES (?, ?)", (2, "second"))
+            await txn.execute("INSERT INTO test VALUES (?, ?)", (3, "third"))
+            
+            # Query within the same transaction
+            result = await txn.execute("SELECT * FROM test ORDER BY id")
+            assert result == [(1, "first"), (2, "second"), (3, "third")]
+        
+        # Verify data was committed
+        result = await manager.execute(db_path, "SELECT COUNT(*) FROM test")
+        assert result == [(3,)]
+        
+        await manager.disconnect_all()
+
+    @pytest.mark.asyncio
+    async def test_transaction_multiple_queries(self, tmp_path):
+        """Test Transaction allows multiple queries without locking the database."""
+        db_path = str(tmp_path / "test.db")
+        manager = Manager()
+        
+        async with manager.Transaction(db_path) as txn:
+            await txn.execute("CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT)")
+            await txn.execute("INSERT INTO items (name) VALUES (?)", ("item1",))
+            await txn.execute("INSERT INTO items (name) VALUES (?)", ("item2",))
+            await txn.execute("INSERT INTO items (name) VALUES (?)", ("item3",))
+            
+            # Query within the same transaction
+            result = await txn.execute("SELECT name FROM items ORDER BY id")
+            assert result == [("item1",), ("item2",), ("item3",)]
+        
+        # Verify data was committed
+        result = await manager.execute(db_path, "SELECT COUNT(*) FROM items")
+        assert result == [(3,)]
+        
+        await manager.disconnect_all()
+
+    @pytest.mark.asyncio
+    async def test_execute_with_cursor_parameter(self, tmp_path):
+        """Test Manager.execute can accept a cursor parameter."""
+        db_path = str(tmp_path / "test.db")
+        manager = Manager()
+        
+        conn = await manager.connect(db_path)
+        await manager.execute(db_path, "CREATE TABLE test (id INTEGER)", commit=True)
+        
+        # Get a cursor and use it for multiple queries
+        cursor = await conn.cursor()
+        try:
+            await manager.execute(db_path, "INSERT INTO test VALUES (1)", cursor=cursor, commit=True)
+            await manager.execute(db_path, "INSERT INTO test VALUES (2)", cursor=cursor, commit=True)
+            result = await manager.execute(db_path, "SELECT * FROM test ORDER BY id", cursor=cursor)
+            assert result == [(1,), (2,)]
+        finally:
+            await cursor.close()
+        
+        await manager.disconnect_all()

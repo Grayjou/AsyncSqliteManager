@@ -1,5 +1,5 @@
 from __future__ import annotations
-from aiosqlite import connect, Connection as AioConnection
+from aiosqlite import connect, Connection as AioConnection, Cursor as AioCursor
 from contextlib import asynccontextmanager
 import asyncio
 from .history import HistoryManager, default_history_format_function
@@ -136,6 +136,7 @@ class ManagerBase:
         params: Optional[QueryParams] = None,
         return_type: str = "fetchall",
         *,
+        cursor: Optional[AioCursor] = None,
         commit: bool = False,
         override_autocommit: bool = False,
         log: bool = False,
@@ -149,6 +150,9 @@ class ManagerBase:
             query (str): SQL query to execute.
             params (tuple or list of tuples, optional): Parameters to inject.
             return_type (str): Return strategy ('fetchall', 'fetchone', etc.).
+            cursor (AioCursor, optional): Cursor to use for execution. If provided,
+                this cursor is used instead of creating a new one. Useful for
+                transactions that need to execute multiple queries with the same cursor.
             commit (bool): Whether to commit after execution.
             override_autocommit (bool): Force override of autocommit behavior.
             log (bool): Whether to log this query.
@@ -160,7 +164,8 @@ class ManagerBase:
         conn = await self.connect(db_path)
         params = params or ()
 
-        async with conn.cursor() as cursor:
+        if cursor is not None:
+            # Use the provided cursor
             result = await try_query(
                 cursor=cursor,
                 query=query,
@@ -173,6 +178,21 @@ class ManagerBase:
                 force_notify_bulk=False,
                 convert_to_dollar=False,
             )
+        else:
+            # Create a new cursor
+            async with conn.cursor() as new_cursor:
+                result = await try_query(
+                    cursor=new_cursor,
+                    query=query,
+                    commit=False,  # IMPORTANT: never auto-commit inside exec
+                    injection_values=params,
+                    return_type=return_type,
+                    log=log,
+                    raise_on_fail=True,
+                    notify_bulk=False,
+                    force_notify_bulk=False,
+                    convert_to_dollar=False,
+                )
 
         # commit logic:
         if self._should_commit(commit, override_autocommit):
