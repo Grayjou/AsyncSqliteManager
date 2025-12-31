@@ -350,7 +350,7 @@ class ManagerBase:
         """
         if not _VALID_SAVEPOINT_NAME.match(name):
             raise ValueError(
-                f"Invalid savepoint name: {name}. "
+                "Invalid savepoint name. "
                 "Must start with a letter or underscore and contain only alphanumeric characters and underscores."
             )
 
