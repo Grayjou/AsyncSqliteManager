@@ -499,3 +499,78 @@ class TestManagerBase:
         assert pc.write_conn is not pc.read_conn
         
         await manager.close(db_path)
+
+    def test_validate_savepoint_name_valid(self):
+        """Test _validate_savepoint_name accepts valid names."""
+        manager = ManagerBase()
+        # These should not raise
+        manager._validate_savepoint_name("sp1")
+        manager._validate_savepoint_name("my_savepoint")
+        manager._validate_savepoint_name("SavePoint123")
+        manager._validate_savepoint_name("_private")
+        manager._validate_savepoint_name("a")
+
+    def test_validate_savepoint_name_invalid_raises(self):
+        """Test _validate_savepoint_name raises for invalid names."""
+        manager = ManagerBase()
+        
+        invalid_names = [
+            "1starts_with_number",
+            "has spaces",
+            "has-dashes",
+            "has.dots",
+            "DROP TABLE; --",
+            "",
+            "has'quote",
+            "has\"doublequote",
+            "has;semicolon",
+        ]
+        
+        for name in invalid_names:
+            with pytest.raises(ValueError, match="Invalid savepoint name"):
+                manager._validate_savepoint_name(name)
+
+    @pytest.mark.asyncio
+    async def test_savepoint_validates_name(self, tmp_path):
+        """Test savepoint method validates name before executing."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        await manager.connect(db_path)
+        
+        # Valid name should work
+        await manager.savepoint(db_path, "valid_savepoint")
+        
+        # Invalid name should raise ValueError
+        with pytest.raises(ValueError, match="Invalid savepoint name"):
+            await manager.savepoint(db_path, "DROP TABLE; --")
+        
+        await manager.close(db_path)
+
+    @pytest.mark.asyncio
+    async def test_rollback_to_validates_name(self, tmp_path):
+        """Test rollback_to method validates name before executing."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        await manager.connect(db_path)
+        
+        # Invalid name should raise ValueError before even checking connection
+        with pytest.raises(ValueError, match="Invalid savepoint name"):
+            await manager.rollback_to(db_path, "'; DROP TABLE users; --")
+        
+        await manager.close(db_path)
+
+    @pytest.mark.asyncio
+    async def test_release_savepoint_validates_name(self, tmp_path):
+        """Test release_savepoint method validates name before executing."""
+        db_path = str(tmp_path / "test.db")
+        manager = ManagerBase()
+        
+        await manager.connect(db_path)
+        
+        # Invalid name should raise ValueError before even checking connection
+        with pytest.raises(ValueError, match="Invalid savepoint name"):
+            await manager.release_savepoint(db_path, "invalid name")
+        
+        await manager.close(db_path)

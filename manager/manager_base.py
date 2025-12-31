@@ -2,6 +2,7 @@ from __future__ import annotations
 from aiosqlite import connect, Connection as AioConnection, Cursor as AioCursor
 from contextlib import asynccontextmanager
 import asyncio
+import re
 from .history import HistoryManager, default_history_format_function
 from .dbpathdict import DbPathDict, PathConnection
 from .types import QueryParams, QueryResult, HistoryItem
@@ -13,6 +14,9 @@ from typing import Optional, Callable, Any, Dict, Union, List, Literal
 from logging import Logger, getLogger as logging_getLogger
 
 from ..async_history_dump import AsyncHistoryDumpGenerator
+
+# Regex for validating savepoint names to prevent SQL injection
+_VALID_SAVEPOINT_NAME = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
 
 class ManagerBase:
 
@@ -334,8 +338,33 @@ class ManagerBase:
             self._call_logger("info", f"Rollback on {db_path}")
 
     # Savepoint Management
+    @staticmethod
+    def _validate_savepoint_name(name: str) -> None:
+        """Validate savepoint name to prevent SQL injection.
+        
+        Args:
+            name: The savepoint name to validate.
+            
+        Raises:
+            ValueError: If the name contains invalid characters.
+        """
+        if not _VALID_SAVEPOINT_NAME.match(name):
+            raise ValueError(
+                f"Invalid savepoint name: {name}. "
+                "Must start with a letter or underscore and contain only alphanumeric characters and underscores."
+            )
+
     async def savepoint(self, db_path: str, name: str) -> None:
-        """Create a named savepoint."""
+        """Create a named savepoint.
+        
+        Args:
+            db_path: Path or alias of the database.
+            name: Name of the savepoint. Must be alphanumeric with underscores only.
+            
+        Raises:
+            ValueError: If the savepoint name is invalid.
+        """
+        self._validate_savepoint_name(name)
         conn = self.get_connection(db_path)
         if conn is None:
             return
@@ -343,7 +372,16 @@ class ManagerBase:
         self._call_logger("info", f"SAVEPOINT {name} created in {db_path}")
 
     async def rollback_to(self, db_path: str, name: str) -> None:
-        """Roll back to a savepoint."""
+        """Roll back to a savepoint.
+        
+        Args:
+            db_path: Path or alias of the database.
+            name: Name of the savepoint to roll back to.
+            
+        Raises:
+            ValueError: If the savepoint name is invalid.
+        """
+        self._validate_savepoint_name(name)
         conn = self.get_connection(db_path)
         if conn is None:
             return
@@ -351,7 +389,16 @@ class ManagerBase:
         self._call_logger("info", f"ROLLBACK TO SAVEPOINT {name} in {db_path}")
 
     async def release_savepoint(self, db_path: str, name: str) -> None:
-        """Release a savepoint."""
+        """Release a savepoint.
+        
+        Args:
+            db_path: Path or alias of the database.
+            name: Name of the savepoint to release.
+            
+        Raises:
+            ValueError: If the savepoint name is invalid.
+        """
+        self._validate_savepoint_name(name)
         conn = self.get_connection(db_path)
         if conn is None:
             return
