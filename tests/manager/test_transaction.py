@@ -164,6 +164,7 @@ class TestTransaction:
             override_autocommit=False,
             log=False,
             override_omnilog=False,
+            mode="write",
         )
         assert result == [(1,)]
 
