@@ -52,6 +52,25 @@ class TestConvertValue:
         assert convert_value(True) is True
         assert convert_value(False) is False
         assert convert_value(b'bytes') == b'bytes'
+        
+    def test_preserve_hex_strings(self):
+        """Test that hex strings are preserved."""
+        assert convert_value('0x10') == '0x10'
+        assert convert_value('0X10') == '0X10'
+        
+    def test_preserve_octal_strings(self):
+        """Test that octal strings are preserved."""
+        assert convert_value('0o10') == '0o10'
+        assert convert_value('0O10') == '0O10'
+        
+    def test_preserve_binary_strings(self):
+        """Test that binary strings are preserved."""
+        assert convert_value('0b10') == '0b10'
+        assert convert_value('0B10') == '0B10'
+        
+    def test_handle_empty_string(self):
+        """Test that empty strings are handled."""
+        assert convert_value('') == ''
 
 
 class TestTypeConvertingRowFactory:

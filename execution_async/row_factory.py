@@ -13,7 +13,7 @@ def convert_value(value: Any) -> Any:
     """
     Convert a value to its appropriate Python type.
     
-    Attempts to convert string representations of numbers to their numeric types.
+    Attempts to convert string representations of decimal integers to int type.
     This is particularly useful for handling TEXT columns that contain integer values
     or CAST operations that convert integers to text.
     
@@ -21,8 +21,9 @@ def convert_value(value: Any) -> Any:
         value: The value to convert (typically from a SQLite row).
         
     Returns:
-        The converted value. If value is a string representing an integer,
-        returns an int. Otherwise, returns the original value unchanged.
+        The converted value. If value is a string representing a decimal integer
+        (including negative integers), returns an int. Otherwise, returns the 
+        original value unchanged.
         
     Examples:
         >>> convert_value('123')
@@ -35,6 +36,11 @@ def convert_value(value: Any) -> Any:
         123
         >>> convert_value(None)
         None
+        
+    Note:
+        Only decimal integer strings are converted. Strings with prefixes like
+        '0x' (hex), '0o' (octal), or '0b' (binary) are treated as non-numeric
+        and preserved as strings. Float strings like '123.45' are also preserved.
     """
     if value is None:
         return None
@@ -43,13 +49,19 @@ def convert_value(value: Any) -> Any:
     if not isinstance(value, str):
         return value
     
+    # Skip empty strings
+    if not value:
+        return value
+    
     # Try to convert to integer
     try:
-        # Check if it's a valid integer string (including negative)
-        # Using int() directly as it handles various formats
+        # Only convert if it looks like a decimal integer (no decimal point, no prefixes)
+        # This check is faster than trying int() conversion on complex strings
+        if '.' in value or value.startswith(('0x', '0X', '0o', '0O', '0b', '0B')):
+            return value
+            
         int_value = int(value)
-        # Verify that converting back to string gives the same result
-        # This prevents '123.0' from being converted to 123
+        # Verify round-trip conversion to ensure we're not losing information
         if str(int_value) == value:
             return int_value
     except (ValueError, OverflowError):
