@@ -7,6 +7,7 @@ An async SQLite database connection manager for Python, built on top of `aiosqli
 - **Async/Await Support**: Built on `aiosqlite` for non-blocking database operations
 - **Multiple Database Connections**: Manage connections to multiple SQLite databases simultaneously
 - **Read/Write Connection Separation**: Support for separate read and write connections for improved concurrency
+- **Automatic Type Conversion**: Intelligent conversion of string representations to appropriate types (e.g., '0' → 0)
 - **Path Aliases**: Reference databases using custom aliases instead of full paths
 - **Transaction Management**: Context managers for safe transaction handling with automatic commit/rollback
 - **Query History**: Track query execution history with optional file dumping
@@ -264,6 +265,43 @@ read_conn = manager.get_connection("database.db", mode="read")
 ```
 
 **Note**: When `read_conn` is not set, `get_connection(mode="read")` falls back to the write connection for backwards compatibility.
+
+## Automatic Type Conversion
+
+AsyncSqliteManager automatically converts string representations of integers back to `int` type when fetching data. This is particularly useful when:
+
+- Working with TEXT columns that contain integer values
+- Using IntEnum or other types that require integer values
+- Dealing with CAST operations that convert integers to text
+
+```python
+from enum import IntEnum
+
+class Status(IntEnum):
+    PENDING = 0
+    ACTIVE = 1
+    COMPLETED = 2
+
+# Even if the column is TEXT, integer strings are converted to int
+await manager.execute("mydb", "CREATE TABLE tasks (status TEXT)", commit=True)
+await manager.execute("mydb", "INSERT INTO tasks VALUES ('0')", commit=True)
+
+result = await manager.execute("mydb", "SELECT status FROM tasks", return_type="fetchone")
+status_value = result[0][0]  # Returns 0 as int, not '0' as string
+
+# Works seamlessly with IntEnum
+status = Status(status_value)  # No ValueError!
+assert status == Status.PENDING
+```
+
+**Type Conversion Rules:**
+- String representations of integers (e.g., '0', '123', '-456') are converted to `int`
+- Non-numeric strings (e.g., 'hello', 'abc123') remain as strings
+- Float strings (e.g., '123.45') remain as strings
+- `None` values are preserved
+- Other types (actual integers, floats, bytes) are unchanged
+
+This conversion is applied automatically to all query results and works with both read and write connections.
 
 ## History Management
 
