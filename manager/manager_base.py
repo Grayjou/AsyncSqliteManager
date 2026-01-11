@@ -9,6 +9,7 @@ from .types import QueryParams, QueryResult, HistoryItem
 from .exceptions import ConnectionError
 
 from ..execution_async import try_query
+from ..execution_async.row_factory import type_converting_row_factory
 from ..log import ExecutionLog
 from typing import Optional, Callable, Any, Dict, Union, List, Literal
 from logging import Logger, getLogger as logging_getLogger
@@ -166,9 +167,15 @@ class ManagerBase:
             db_path: Path to the SQLite database file.
             alias: Optional alias for the database path.
             create_read_connection: If True, creates a separate read connection.
+            mode: "read" or "write" - specifies which connection to return.
             
         Returns:
-            The write connection to the database.
+            The requested connection to the database.
+            
+        Note:
+            All connections use a custom row_factory that automatically converts
+            string representations of integers to int type. This is useful for
+            working with IntEnum and similar types that require integer values.
         """
         if db_path in self.db_dict:
             pc = self.db_dict[db_path]
@@ -176,6 +183,7 @@ class ManagerBase:
             if create_read_connection and pc.read_conn is None:
                 try:
                     pc.read_conn = await connect(db_path)
+                    pc.read_conn.row_factory = type_converting_row_factory
                 except Exception as e:
                     raise ConnectionError(f"Failed to create read connection to {db_path}: {e}") from e
             
@@ -187,9 +195,12 @@ class ManagerBase:
         
         try:
             write_conn = await connect(db_path)
+            write_conn.row_factory = type_converting_row_factory
+            
             read_conn = None
             if create_read_connection:
                 read_conn = await connect(db_path)
+                read_conn.row_factory = type_converting_row_factory
             
             pc = PathConnection(
                 path=db_path,
@@ -236,9 +247,43 @@ class ManagerBase:
             override_autocommit (bool): Force override of autocommit behavior.
             log (bool): Whether to log this query.
             override_omnilog (bool): Force override of omni_log behavior.
+            mode (Literal["read", "write"], optional): Connection mode to use. Defaults to "write".
+                - "read": Use a read-only connection (if available). Best for SELECT queries
+                  to improve concurrency. Falls back to write connection if no read connection exists.
+                - "write": Use the write connection. Required for INSERT, UPDATE, DELETE, and DDL queries.
+            create_read_connection (bool, optional): If True and mode="read", creates a separate 
+                read connection if it doesn't exist. Defaults to True.
 
         Returns:
             Optional[List[Any]]: Query results, if any.
+            
+        Note:
+            All query results use automatic type conversion - string representations of integers
+            are automatically converted to int type. This is useful for working with IntEnum
+            and other types that require integer values.
+            
+        Connection Mode Best Practices:
+            - Use mode="read" for all SELECT queries to leverage read connection and improve
+              concurrent read performance.
+            - Use mode="write" (default) for INSERT, UPDATE, DELETE, CREATE, ALTER, DROP queries.
+            - Read connections can execute simultaneously without blocking each other.
+            - Write operations will block other operations on the same database.
+            
+        Performance Implications:
+            - Read mode with separate read connection: Multiple simultaneous reads possible.
+            - Write mode: Serialized access, one operation at a time per database.
+            - Creating separate read connections adds overhead but improves concurrency.
+            
+        Examples:
+            # Read-only query using read connection
+            users = await manager.execute("mydb", "SELECT * FROM users", mode="read")
+            
+            # Write query using write connection (default)
+            await manager.execute("mydb", "INSERT INTO users VALUES (?, ?)", 
+                                params=(1, "Alice"), commit=True, mode="write")
+            
+            # Read query with explicit write connection
+            count = await manager.execute("mydb", "SELECT COUNT(*) FROM users", mode="write")
         """
         conn = await self.connect(db_path, mode=mode, create_read_connection=create_read_connection and mode=="read")
         params = params or ()
