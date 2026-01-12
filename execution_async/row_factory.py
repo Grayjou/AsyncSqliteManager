@@ -8,6 +8,10 @@ of integers back to int type, which is needed for IntEnum construction.
 from typing import Any, Tuple, Optional, Callable, Type
 import sqlite3
 
+# Constants for boolean string conversion
+FALSY_STRINGS = ('0', 'False', 'false', 'FALSE', '')
+TRUTHY_STRINGS = ('1', 'True', 'true', 'TRUE')
+
 
 def convert_value(value: Any) -> Any:
     """
@@ -161,9 +165,9 @@ def convert_value_with_type(value: Any, expected_type: Optional[Type]) -> Any:
     if expected_type is bool:
         # Convert string representations to bool
         if isinstance(value, str):
-            if value in ('0', 'False', 'false', 'FALSE', ''):
+            if value in FALSY_STRINGS:
                 return False
-            elif value in ('1', 'True', 'true', 'TRUE'):
+            elif value in TRUTHY_STRINGS:
                 return True
         # Convert numeric types to bool
         elif isinstance(value, (int, float)):

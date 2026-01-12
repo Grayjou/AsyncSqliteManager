@@ -359,6 +359,11 @@ class ManagerBase:
                     )
         
         # Apply type conversion post-fetch if needed and cursor was provided
+        # Note: This approach is used for existing transaction cursors where the row_factory
+        # was already set before we could change it. For large result sets, this creates
+        # a new list and applies conversion to each row, which may impact memory/performance.
+        # For better performance with large datasets and custom type conversion, prefer
+        # using execute() without an existing cursor (which sets row_factory before execution).
         if expected_types is not None and cursor is not None and result is not None:
             factory = custom_row_factory(expected_types)
             # The factory function doesn't use the cursor parameter, but we pass None
