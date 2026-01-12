@@ -304,29 +304,46 @@ class ManagerBase:
         conn = await self.connect(db_path, mode=mode, create_read_connection=create_read_connection and mode=="read")
         params = params or ()
         
-        # Early escape: if expected_types is provided, temporarily change row_factory
-        original_row_factory = None
-        if expected_types is not None:
-            original_row_factory = conn.row_factory
-            conn.row_factory = custom_row_factory(expected_types)
-
-        try:
-            if cursor is not None:
-                # Use the provided cursor
-                result = await try_query(
-                    cursor=cursor,
-                    query=query,
-                    commit=False,  # IMPORTANT: never auto-commit inside exec
-                    injection_values=params,
-                    return_type=return_type,
-                    log=log,
-                    raise_on_fail=True,
-                    notify_bulk=False,
-                    force_notify_bulk=False,
-                    convert_to_dollar=False,
-                )
+        # Note: We cannot change row_factory dynamically for cursors that have already
+        # executed queries. Instead, we'll apply type conversion after fetching results.
+        result = None
+        
+        if cursor is not None:
+            # Use the provided cursor
+            result = await try_query(
+                cursor=cursor,
+                query=query,
+                commit=False,  # IMPORTANT: never auto-commit inside exec
+                injection_values=params,
+                return_type=return_type,
+                log=log,
+                raise_on_fail=True,
+                notify_bulk=False,
+                force_notify_bulk=False,
+                convert_to_dollar=False,
+            )
+        else:
+            # Create a new cursor with custom row_factory if needed
+            if expected_types is not None:
+                original_row_factory = conn.row_factory
+                conn.row_factory = custom_row_factory(expected_types)
+                try:
+                    async with conn.cursor() as new_cursor:
+                        result = await try_query(
+                            cursor=new_cursor,
+                            query=query,
+                            commit=False,  # IMPORTANT: never auto-commit inside exec
+                            injection_values=params,
+                            return_type=return_type,
+                            log=log,
+                            raise_on_fail=True,
+                            notify_bulk=False,
+                            force_notify_bulk=False,
+                            convert_to_dollar=False,
+                        )
+                finally:
+                    conn.row_factory = original_row_factory
             else:
-                # Create a new cursor
                 async with conn.cursor() as new_cursor:
                     result = await try_query(
                         cursor=new_cursor,
@@ -340,10 +357,18 @@ class ManagerBase:
                         force_notify_bulk=False,
                         convert_to_dollar=False,
                     )
-        finally:
-            # Restore original row_factory if it was changed
-            if original_row_factory is not None:
-                conn.row_factory = original_row_factory
+        
+        # Apply type conversion post-fetch if needed and cursor was provided
+        if expected_types is not None and cursor is not None and result is not None:
+            factory = custom_row_factory(expected_types)
+            # Create a mock cursor for the factory
+            class MockCursor:
+                def __init__(self):
+                    self.description = None
+            mock_cursor = MockCursor()
+            
+            # Apply conversion to all rows in result
+            result = [factory(mock_cursor, row) for row in result]
 
         # commit logic:
 
