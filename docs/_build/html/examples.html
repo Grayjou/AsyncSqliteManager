@@ -1,0 +1,475 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Examples &mdash; AsyncSqliteManager 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="Exceptions API" href="api/exceptions.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            AsyncSqliteManager
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-database-operations">Basic Database Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-tables-and-inserting-data">Creating Tables and Inserting Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#querying-data">Querying Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-type-conversion-examples">Advanced Type Conversion Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-boolean-flags">Working with Boolean Flags</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#preventing-unwanted-conversions">Preventing Unwanted Conversions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#transaction-examples">Transaction Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-transaction">Basic Transaction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transaction-with-status-checking">Transaction with Status Checking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transaction-with-custom-types">Transaction with Custom Types</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#multiple-databases">Multiple Databases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-multiple-databases">Working with Multiple Databases</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#read-write-separation">Read/Write Separation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-separate-read-connections">Using Separate Read Connections</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AsyncSqliteManager</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Examples</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
+<p>This page contains practical examples of using AsyncSqliteManager.</p>
+<section id="basic-database-operations">
+<h2>Basic Database Operations<a class="headerlink" href="#basic-database-operations" title="Link to this heading"></a></h2>
+<section id="creating-tables-and-inserting-data">
+<h3>Creating Tables and Inserting Data<a class="headerlink" href="#creating-tables-and-inserting-data" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="kn">from</span> <span class="nn">manager</span> <span class="kn">import</span> <span class="n">Manager</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">setup_database</span><span class="p">():</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;app.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create table</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;CREATE TABLE IF NOT EXISTS users (</span>
+<span class="sd">            id INTEGER PRIMARY KEY AUTOINCREMENT,</span>
+<span class="sd">            name TEXT NOT NULL,</span>
+<span class="sd">            email TEXT UNIQUE,</span>
+<span class="sd">            active INTEGER DEFAULT 1</span>
+<span class="sd">        )&quot;&quot;&quot;</span><span class="p">,</span>
+        <span class="n">commit</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Insert data</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;alice@example.com&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="s2">&quot;bob@example.com&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;Charlie&quot;</span><span class="p">,</span> <span class="s2">&quot;charlie@example.com&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">email</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">email</span><span class="p">),</span>
+            <span class="n">commit</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">setup_database</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<section id="querying-data">
+<h3>Querying Data<a class="headerlink" href="#querying-data" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">query_users</span><span class="p">():</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;app.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Fetch all users</span>
+    <span class="n">all_users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;All users:&quot;</span><span class="p">,</span> <span class="n">all_users</span><span class="p">)</span>
+
+    <span class="c1"># Fetch one user</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SELECT * FROM users WHERE name = ?&quot;</span><span class="p">,</span>
+        <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,),</span>
+        <span class="n">return_type</span><span class="o">=</span><span class="s2">&quot;fetchone&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;User:&quot;</span><span class="p">,</span> <span class="n">user</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">user</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">query_users</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="advanced-type-conversion-examples">
+<h2>Advanced Type Conversion Examples<a class="headerlink" href="#advanced-type-conversion-examples" title="Link to this heading"></a></h2>
+<section id="working-with-boolean-flags">
+<h3>Working with Boolean Flags<a class="headerlink" href="#working-with-boolean-flags" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">handle_boolean_flags</span><span class="p">():</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;app.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create table with TEXT columns for flags</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;CREATE TABLE IF NOT EXISTS settings (</span>
+<span class="sd">            key TEXT PRIMARY KEY,</span>
+<span class="sd">            enabled TEXT,</span>
+<span class="sd">            value TEXT</span>
+<span class="sd">        )&quot;&quot;&quot;</span><span class="p">,</span>
+        <span class="n">commit</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Insert settings with string representations</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;INSERT INTO settings VALUES (&#39;feature_x&#39;, &#39;1&#39;, &#39;100&#39;)&quot;</span><span class="p">,</span>
+        <span class="n">commit</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Query with custom type conversion</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SELECT enabled, value FROM settings WHERE key = ?&quot;</span><span class="p">,</span>
+        <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;feature_x&quot;</span><span class="p">,),</span>
+        <span class="n">return_type</span><span class="o">=</span><span class="s2">&quot;fetchone&quot;</span><span class="p">,</span>
+        <span class="n">expected_types</span><span class="o">=</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>  <span class="c1"># Convert enabled to bool, value to int</span>
+    <span class="p">)</span>
+
+    <span class="n">enabled</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feature X: enabled=</span><span class="si">{</span><span class="n">enabled</span><span class="si">}</span><span class="s2"> (type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">enabled</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">), &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;value=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> (type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="c1"># Output: Feature X: enabled=True (type: bool), value=100 (type: int)</span>
+
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">handle_boolean_flags</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<section id="preventing-unwanted-conversions">
+<h3>Preventing Unwanted Conversions<a class="headerlink" href="#preventing-unwanted-conversions" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">prevent_conversion</span><span class="p">():</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;app.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create table for products</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;CREATE TABLE IF NOT EXISTS products (</span>
+<span class="sd">            id INTEGER PRIMARY KEY,</span>
+<span class="sd">            sku TEXT,</span>
+<span class="sd">            name TEXT,</span>
+<span class="sd">            quantity INTEGER</span>
+<span class="sd">        )&quot;&quot;&quot;</span><span class="p">,</span>
+        <span class="n">commit</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Insert product with numeric SKU</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;INSERT INTO products VALUES (1, &#39;12345&#39;, &#39;Widget&#39;, 100)&quot;</span><span class="p">,</span>
+        <span class="n">commit</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Query WITHOUT type conversion for SKU (it should remain a string)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SELECT sku, name, quantity FROM products WHERE id = 1&quot;</span><span class="p">,</span>
+        <span class="n">return_type</span><span class="o">=</span><span class="s2">&quot;fetchone&quot;</span><span class="p">,</span>
+        <span class="n">expected_types</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>  <span class="c1"># Skip SKU and name, convert quantity</span>
+    <span class="p">)</span>
+
+    <span class="n">sku</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">quantity</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Product: SKU=</span><span class="si">{</span><span class="n">sku</span><span class="si">}</span><span class="s2"> (type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">sku</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">), &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;name=</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, quantity=</span><span class="si">{</span><span class="n">quantity</span><span class="si">}</span><span class="s2"> (type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="c1"># Output: Product: SKU=12345 (type: str), name=Widget, quantity=100 (type: int)</span>
+
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">prevent_conversion</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="transaction-examples">
+<h2>Transaction Examples<a class="headerlink" href="#transaction-examples" title="Link to this heading"></a></h2>
+<section id="basic-transaction">
+<h3>Basic Transaction<a class="headerlink" href="#basic-transaction" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">basic_transaction</span><span class="p">():</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;app.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Transaction with auto-commit</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;David&quot;</span><span class="p">,</span> <span class="s2">&quot;david@example.com&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Eve&quot;</span><span class="p">,</span> <span class="s2">&quot;eve@example.com&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="c1"># Automatically committed</span>
+
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">basic_transaction</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<section id="transaction-with-status-checking">
+<h3>Transaction with Status Checking<a class="headerlink" href="#transaction-with-status-checking" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">transaction_with_status</span><span class="p">():</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;app.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Successful transaction</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Frank&quot;</span><span class="p">,</span> <span class="s2">&quot;frank@example.com&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">txn</span><span class="o">.</span><span class="n">succeeded</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ Transaction committed successfully&quot;</span><span class="p">)</span>
+        <span class="c1"># Log to audit table</span>
+        <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;INSERT INTO audit_log VALUES (?, ?)&quot;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;user_created&quot;</span><span class="p">,</span> <span class="s2">&quot;Frank&quot;</span><span class="p">),</span>
+            <span class="n">commit</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Failed transaction</span>
+    <span class="n">txn2</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="n">txn2</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">txn2</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Grace&quot;</span><span class="p">,</span> <span class="s2">&quot;grace@example.com&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="c1"># Simulate an error</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Simulated error&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="n">txn2</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✗ Transaction rolled back due to error&quot;</span><span class="p">)</span>
+        <span class="c1"># Send alert</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Alert: Transaction failed for user Grace&quot;</span><span class="p">)</span>
+
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transaction_with_status</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<section id="transaction-with-custom-types">
+<h3>Transaction with Custom Types<a class="headerlink" href="#transaction-with-custom-types" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">transaction_custom_types</span><span class="p">():</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;app.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+        <span class="c1"># Query with custom type conversion within transaction</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;SELECT enabled, priority FROM settings&quot;</span><span class="p">,</span>
+            <span class="n">expected_types</span><span class="o">=</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">priority</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">enabled</span> <span class="ow">and</span> <span class="n">priority</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High priority setting: </span><span class="si">{</span><span class="n">priority</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transaction_custom_types</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="multiple-databases">
+<h2>Multiple Databases<a class="headerlink" href="#multiple-databases" title="Link to this heading"></a></h2>
+<section id="working-with-multiple-databases">
+<h3>Working with Multiple Databases<a class="headerlink" href="#working-with-multiple-databases" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">multiple_databases</span><span class="p">():</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+
+    <span class="c1"># Connect to multiple databases</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;users.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;users&quot;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;products.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;products&quot;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;orders.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;orders&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Query from different databases</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;users&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+    <span class="n">products</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;products&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT * FROM products&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create an order using data from multiple databases</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span><span class="s2">&quot;orders&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">[:</span><span class="mi">5</span><span class="p">]:</span>  <span class="c1"># First 5 users</span>
+            <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">products</span><span class="p">[:</span><span class="mi">3</span><span class="p">]:</span>  <span class="c1"># First 3 products</span>
+                <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">&quot;INSERT INTO orders (user_id, product_id) VALUES (?, ?)&quot;</span><span class="p">,</span>
+                    <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="n">user</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">product</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">txn</span><span class="o">.</span><span class="n">succeeded</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created orders for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">users</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span><span class="si">}</span><span class="s2"> users&quot;</span><span class="p">)</span>
+
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">multiple_databases</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="read-write-separation">
+<h2>Read/Write Separation<a class="headerlink" href="#read-write-separation" title="Link to this heading"></a></h2>
+<section id="using-separate-read-connections">
+<h3>Using Separate Read Connections<a class="headerlink" href="#using-separate-read-connections" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">read_write_separation</span><span class="p">():</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">()</span>
+
+    <span class="c1"># Connect with separate read connection</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;app.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">create_read_connection</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Write operation (uses write connection)</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span>
+        <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Henry&quot;</span><span class="p">,</span> <span class="s2">&quot;henry@example.com&quot;</span><span class="p">),</span>
+        <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;write&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Read operations (use read connection for better concurrency)</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;read&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">count</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;app&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SELECT COUNT(*) FROM users&quot;</span><span class="p">,</span>
+        <span class="n">return_type</span><span class="o">=</span><span class="s2">&quot;fetchone&quot;</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;read&quot;</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total users: </span><span class="si">{</span><span class="n">count</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">read_write_separation</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api/exceptions.html" class="btn btn-neutral float-left" title="Exceptions API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="changelog.html" class="btn btn-neutral float-right" title="Changelog" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Grayjou.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,311 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Features &mdash; AsyncSqliteManager 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api/index.html" />
+    <link rel="prev" title="Quick Start Guide" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            AsyncSqliteManager
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Features</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#async-await-support">Async/Await Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multiple-database-connections">Multiple Database Connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#read-write-connection-separation">Read/Write Connection Separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#customizable-type-conversion">Customizable Type Conversion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#default-automatic-conversion">Default Automatic Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom-type-conversion">Custom Type Conversion</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#transaction-management-with-status-tracking">Transaction Management with Status Tracking</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#transaction-context-manager">Transaction Context Manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transaction-status-properties">Transaction Status Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#safe-transactions">Safe Transactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transaction-custom-type-conversion">Transaction Custom Type Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#savepoints">Savepoints</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#query-history">Query History</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logging-integration">Logging Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#path-aliases">Path Aliases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#autocommit-mode">Autocommit Mode</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AsyncSqliteManager</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Features</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/features.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="features">
+<h1>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h1>
+<p>AsyncSqliteManager provides a comprehensive set of features for managing SQLite databases in async Python applications.</p>
+<section id="async-await-support">
+<h2>Async/Await Support<a class="headerlink" href="#async-await-support" title="Link to this heading"></a></h2>
+<p>Built on top of <cite>aiosqlite</cite>, AsyncSqliteManager provides full async/await support for non-blocking database operations.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">fetch_users</span><span class="p">():</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+</section>
+<section id="multiple-database-connections">
+<h2>Multiple Database Connections<a class="headerlink" href="#multiple-database-connections" title="Link to this heading"></a></h2>
+<p>Manage connections to multiple SQLite databases simultaneously, each with its own alias for easy reference.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;users.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;users&quot;</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;products.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;products&quot;</span><span class="p">)</span>
+
+<span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;users&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+<span class="n">products</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;products&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT * FROM products&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="read-write-connection-separation">
+<h2>Read/Write Connection Separation<a class="headerlink" href="#read-write-connection-separation" title="Link to this heading"></a></h2>
+<p>Improve concurrency by using separate connections for read and write operations.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create connection with separate read connection</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;database.db&quot;</span><span class="p">,</span> <span class="n">create_read_connection</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Read operations use read connection</span>
+<span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;database.db&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;read&quot;</span><span class="p">)</span>
+
+<span class="c1"># Write operations use write connection</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;database.db&quot;</span><span class="p">,</span> <span class="s2">&quot;INSERT INTO users VALUES (?, ?)&quot;</span><span class="p">,</span>
+                     <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Alice&quot;</span><span class="p">),</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;write&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="customizable-type-conversion">
+<h2>Customizable Type Conversion<a class="headerlink" href="#customizable-type-conversion" title="Link to this heading"></a></h2>
+<p>New in this version! Control how data is converted from SQLite to Python types on a per-query basis.</p>
+<section id="default-automatic-conversion">
+<h3>Default Automatic Conversion<a class="headerlink" href="#default-automatic-conversion" title="Link to this heading"></a></h3>
+<p>By default, AsyncSqliteManager automatically converts string representations of integers to <cite>int</cite> type:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Even if the column is TEXT, integer strings are converted to int</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;CREATE TABLE tasks (status TEXT)&quot;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;INSERT INTO tasks VALUES (&#39;0&#39;)&quot;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT status FROM tasks&quot;</span><span class="p">,</span> <span class="n">return_type</span><span class="o">=</span><span class="s2">&quot;fetchone&quot;</span><span class="p">)</span>
+<span class="n">status_value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Returns 0 as int, not &#39;0&#39; as string</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-type-conversion">
+<h3>Custom Type Conversion<a class="headerlink" href="#custom-type-conversion" title="Link to this heading"></a></h3>
+<p>Use the <cite>expected_types</cite> parameter to specify exactly how each column should be converted:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert first column to bool, second to int</span>
+<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SELECT &#39;1&#39;, &#39;0&#39;, &#39;blablabla&#39;, &#39;uuu&#39;&quot;</span><span class="p">,</span>
+    <span class="n">expected_types</span><span class="o">=</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="c1"># Result: (True, 0, &#39;blablabla&#39;, &#39;uuu&#39;)</span>
+
+<span class="c1"># Skip conversion for specific columns using None</span>
+<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SELECT &#39;1&#39;, &#39;0&#39;, &#39;blablabla&#39;, &#39;uuu&#39;&quot;</span><span class="p">,</span>
+    <span class="n">expected_types</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="c1"># Result: (&#39;1&#39;, 0, &#39;blablabla&#39;, &#39;uuu&#39;)</span>
+</pre></div>
+</div>
+<p>This prevents issues where numeric strings (like titles or descriptions) are silently converted to integers when you don’t want them to be.</p>
+</section>
+</section>
+<section id="transaction-management-with-status-tracking">
+<h2>Transaction Management with Status Tracking<a class="headerlink" href="#transaction-management-with-status-tracking" title="Link to this heading"></a></h2>
+<p>New in this version! Transactions now provide status properties to track success or failure.</p>
+<section id="transaction-context-manager">
+<h3>Transaction Context Manager<a class="headerlink" href="#transaction-context-manager" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (name) VALUES (?)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,))</span>
+    <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (name) VALUES (?)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Bob&quot;</span><span class="p">,))</span>
+    <span class="c1"># Automatically commits on success, rolls back on exception</span>
+</pre></div>
+</div>
+</section>
+<section id="transaction-status-properties">
+<h3>Transaction Status Properties<a class="headerlink" href="#transaction-status-properties" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (name) VALUES (?)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,))</span>
+
+<span class="c1"># Check transaction status after exit</span>
+<span class="k">if</span> <span class="n">txn</span><span class="o">.</span><span class="n">succeeded</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Transaction was committed&quot;</span><span class="p">)</span>
+    <span class="c1"># Perform follow-up actions</span>
+
+<span class="k">if</span> <span class="n">txn</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Transaction was rolled back&quot;</span><span class="p">)</span>
+    <span class="c1"># Handle failure</span>
+</pre></div>
+</div>
+</section>
+<section id="safe-transactions">
+<h3>Safe Transactions<a class="headerlink" href="#safe-transactions" title="Link to this heading"></a></h3>
+<p>Use safe transactions with automatic locking to prevent concurrent access:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">safe_transaction</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (name) VALUES (?)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,))</span>
+    <span class="c1"># Prevents concurrent access to the same database</span>
+</pre></div>
+</div>
+</section>
+<section id="transaction-custom-type-conversion">
+<h3>Transaction Custom Type Conversion<a class="headerlink" href="#transaction-custom-type-conversion" title="Link to this heading"></a></h3>
+<p>Transactions support the same custom type conversion as regular execute calls:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;SELECT status, count FROM items&quot;</span><span class="p">,</span>
+        <span class="n">expected_types</span><span class="o">=</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="savepoints">
+<h3>Savepoints<a class="headerlink" href="#savepoints" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">savepoint</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;sp1&quot;</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;INSERT INTO users (name) VALUES (?)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,))</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">rollback_to</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;sp1&quot;</span><span class="p">)</span>  <span class="c1"># Undo changes since savepoint</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">release_savepoint</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;sp1&quot;</span><span class="p">)</span>  <span class="c1"># Release savepoint</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="query-history">
+<h2>Query History<a class="headerlink" href="#query-history" title="Link to this heading"></a></h2>
+<p>Track query execution history with optional file dumping:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get current history length</span>
+<span class="n">length</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">history_length</span>
+
+<span class="c1"># Set history length (None to disable)</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">history_length</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="c1"># Flush history to file</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">flush_history_to_file</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="logging-integration">
+<h2>Logging Integration<a class="headerlink" href="#logging-integration" title="Link to this heading"></a></h2>
+<p>Built-in logging support for query tracking:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;my_app&quot;</span><span class="p">)</span>
+<span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span> <span class="n">omni_log</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="path-aliases">
+<h2>Path Aliases<a class="headerlink" href="#path-aliases" title="Link to this heading"></a></h2>
+<p>Reference databases using custom aliases instead of full paths:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;/long/path/to/database.db&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;mydb&quot;</span><span class="p">)</span>
+
+<span class="c1"># Use alias instead of full path</span>
+<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="autocommit-mode">
+<h2>Autocommit Mode<a class="headerlink" href="#autocommit-mode" title="Link to this heading"></a></h2>
+<p>Optional automatic commit after each query:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">(</span><span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># This query will be automatically committed</span>
+<span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;INSERT INTO users VALUES (?, ?)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Alice&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quick Start Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/index.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Grayjou.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

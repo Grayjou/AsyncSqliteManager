@@ -1,0 +1,254 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manager API &mdash; AsyncSqliteManager 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Transaction API" href="transaction.html" />
+    <link rel="prev" title="API Reference" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            AsyncSqliteManager
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Features</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Manager API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#manager-class">Manager Class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#connection-management">Connection Management</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#query-execution">Query Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transaction-management">Transaction Management</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#context-managers">Context Managers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#properties">Properties</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="transaction.html">Transaction API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="row_factory.html">Row Factory API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">AsyncSqliteManager</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API Reference</a></li>
+      <li class="breadcrumb-item active">Manager API</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/manager.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="manager-api">
+<h1>Manager API<a class="headerlink" href="#manager-api" title="Link to this heading"></a></h1>
+<p>The Manager class is the main entry point for database operations.</p>
+<section id="manager-class">
+<h2>Manager Class<a class="headerlink" href="#manager-class" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">manager</span> <span class="kn">import</span> <span class="n">Manager</span>
+
+<span class="n">manager</span> <span class="o">=</span> <span class="n">Manager</span><span class="p">(</span>
+    <span class="n">autocommit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>          <span class="c1"># Auto-commit after each query</span>
+    <span class="n">omni_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>            <span class="c1"># Log all queries</span>
+    <span class="n">history_length</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>         <span class="c1"># Maximum history entries to keep</span>
+    <span class="n">log_results</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>          <span class="c1"># Include results in history</span>
+    <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>               <span class="c1"># Custom logger instance</span>
+    <span class="n">history_tolerance</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>       <span class="c1"># Tolerance for history overflow</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<section id="connection-management">
+<h3>Connection Management<a class="headerlink" href="#connection-management" title="Link to this heading"></a></h3>
+<p><strong>connect(db_path, alias=None, create_read_connection=False, mode=”write”)</strong></p>
+<p>Connect to a SQLite database.</p>
+<ul class="simple">
+<li><p><strong>db_path</strong> (<em>str</em>): Path to the SQLite database file</p></li>
+<li><p><strong>alias</strong> (<em>Optional[str]</em>): Optional alias for the database path</p></li>
+<li><p><strong>create_read_connection</strong> (<em>bool</em>): If True, creates a separate read connection</p></li>
+<li><p><strong>mode</strong> (<em>Literal[“read”, “write”]</em>): Which connection to return</p></li>
+<li><p><strong>Returns</strong>: The requested connection to the database</p></li>
+</ul>
+<p><strong>get_connection(path_or_alias, mode=”write”)</strong></p>
+<p>Get the connection associated with a given path or alias.</p>
+<ul class="simple">
+<li><p><strong>path_or_alias</strong> (<em>str</em>): The path or alias of the database</p></li>
+<li><p><strong>mode</strong> (<em>Literal[“read”, “write”]</em>): “read” or “write”, defaults to “write”</p></li>
+<li><p><strong>Returns</strong>: The connection for the specified mode, or None if not found</p></li>
+</ul>
+<p><strong>close(db_path)</strong> / <strong>disconnect(db_path)</strong></p>
+<p>Close a database connection (both read and write connections).</p>
+<ul class="simple">
+<li><p><strong>db_path</strong> (<em>str</em>): The path or alias of the database to close</p></li>
+</ul>
+<p><strong>disconnect_all()</strong></p>
+<p>Close all open connections.</p>
+<p><strong>shutdown()</strong></p>
+<p>Gracefully shutdown: disconnect all connections and flush history.</p>
+</section>
+<section id="query-execution">
+<h3>Query Execution<a class="headerlink" href="#query-execution" title="Link to this heading"></a></h3>
+<p><strong>execute(db_path, query, params=None, return_type=”fetchall”, cursor=None, commit=False, override_autocommit=False, log=False, override_omnilog=False, mode=”write”, create_read_connection=True, expected_types=None)</strong></p>
+<p>Execute a SQL query on the specified database.</p>
+<ul class="simple">
+<li><p><strong>db_path</strong> (<em>str</em>): Path or alias of the target SQLite database</p></li>
+<li><p><strong>query</strong> (<em>str</em>): SQL query to execute</p></li>
+<li><p><strong>params</strong> (<em>Optional[QueryParams]</em>): Parameters to inject</p></li>
+<li><p><strong>return_type</strong> (<em>str</em>): Return strategy (‘fetchall’, ‘fetchone’, etc.)</p></li>
+<li><p><strong>cursor</strong> (<em>Optional[AioCursor]</em>): Cursor to use for execution</p></li>
+<li><p><strong>commit</strong> (<em>bool</em>): Whether to commit after execution</p></li>
+<li><p><strong>override_autocommit</strong> (<em>bool</em>): Force override of autocommit behavior</p></li>
+<li><p><strong>log</strong> (<em>bool</em>): Whether to log this query</p></li>
+<li><p><strong>override_omnilog</strong> (<em>bool</em>): Force override of omni_log behavior</p></li>
+<li><p><strong>mode</strong> (<em>Literal[“read”, “write”]</em>): Connection mode to use</p></li>
+<li><p><strong>create_read_connection</strong> (<em>bool</em>): If True and mode=”read”, creates a separate read connection</p></li>
+<li><p><strong>expected_types</strong> (<em>Optional[Tuple[Optional[Type], …]]</em>): <strong>NEW!</strong> A tuple of expected types for type conversion</p></li>
+<li><p><strong>Returns</strong>: Query results, if any</p></li>
+</ul>
+<p>The <cite>expected_types</cite> parameter enables customizable type conversion:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert first two columns: bool and int</span>
+<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SELECT flag, count, name FROM items&quot;</span><span class="p">,</span>
+    <span class="n">expected_types</span><span class="o">=</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Skip first column, convert second to int</span>
+<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SELECT id, count FROM items&quot;</span><span class="p">,</span>
+    <span class="n">expected_types</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="transaction-management">
+<h3>Transaction Management<a class="headerlink" href="#transaction-management" title="Link to this heading"></a></h3>
+<p><strong>commit(db_path, log=False, override_omnilog=False)</strong></p>
+<p>Commit the current transaction.</p>
+<p><strong>rollback(db_path, log=False, override_omnilog=False)</strong></p>
+<p>Rollback the current transaction.</p>
+<p><strong>savepoint(db_path, name)</strong></p>
+<p>Create a named savepoint.</p>
+<p><strong>rollback_to(db_path, name)</strong></p>
+<p>Roll back to a savepoint.</p>
+<p><strong>release_savepoint(db_path, name)</strong></p>
+<p>Release a savepoint.</p>
+</section>
+<section id="context-managers">
+<h3>Context Managers<a class="headerlink" href="#context-managers" title="Link to this heading"></a></h3>
+<p><strong>Transaction(database_path, autocommit=True, log_all=False, manager=None, logger=None)</strong></p>
+<p>Create a Transaction context manager.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">Transaction</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (name) VALUES (?)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,))</span>
+</pre></div>
+</div>
+<p><strong>safe_transaction(db_path, **kw)</strong></p>
+<p>Transaction that automatically acquires the per-DB lock.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">safe_transaction</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">txn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (name) VALUES (?)&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,))</span>
+</pre></div>
+</div>
+<p><strong>queue(db_path)</strong></p>
+<p>Serialize all queries and transactions for this database path.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">with</span> <span class="n">manager</span><span class="o">.</span><span class="n">queue</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">):</span>
+    <span class="c1"># All operations here are serialized</span>
+    <span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;mydb&quot;</span><span class="p">,</span> <span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="properties">
+<h3>Properties<a class="headerlink" href="#properties" title="Link to this heading"></a></h3>
+<p><strong>databases</strong></p>
+<p>Returns a list of all connected database paths.</p>
+<p><strong>history_length</strong></p>
+<p>Get or set the history length. Set to None to disable history.</p>
+<p><strong>history_tolerance</strong></p>
+<p>Get or set the history tolerance.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="transaction.html" class="btn btn-neutral float-right" title="Transaction API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Grayjou.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
