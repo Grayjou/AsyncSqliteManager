@@ -9,9 +9,9 @@ from .types import QueryParams, QueryResult, HistoryItem
 from .exceptions import ConnectionError
 
 from ..execution_async import try_query
-from ..execution_async.row_factory import type_converting_row_factory
+from ..execution_async.row_factory import type_converting_row_factory, custom_row_factory
 from ..log import ExecutionLog
-from typing import Optional, Callable, Any, Dict, Union, List, Literal
+from typing import Optional, Callable, Any, Dict, Union, List, Literal, Tuple, Type
 from logging import Logger, getLogger as logging_getLogger
 
 from ..async_history_dump import AsyncHistoryDumpGenerator
@@ -231,6 +231,7 @@ class ManagerBase:
         override_omnilog: bool = False,
         mode : Literal["read", "write"] = "write",
         create_read_connection: bool = True,
+        expected_types: Optional[Tuple[Optional[Type], ...]] = None,
     ) -> QueryResult:
         """
         Execute a SQL query on the specified database.
@@ -253,14 +254,19 @@ class ManagerBase:
                 - "write": Use the write connection. Required for INSERT, UPDATE, DELETE, and DDL queries.
             create_read_connection (bool, optional): If True and mode="read", creates a separate 
                 read connection if it doesn't exist. Defaults to True.
+            expected_types (Optional[Tuple[Optional[Type], ...]], optional): A tuple of expected types 
+                for type conversion. Can be shorter than the number of columns (remaining columns use 
+                automatic conversion). Use None for a column to skip conversion for that column.
+                If not provided, uses default automatic type conversion.
 
         Returns:
             Optional[List[Any]]: Query results, if any.
             
         Note:
-            All query results use automatic type conversion - string representations of integers
+            By default, query results use automatic type conversion - string representations of integers
             are automatically converted to int type. This is useful for working with IntEnum
-            and other types that require integer values.
+            and other types that require integer values. You can customize this behavior using the
+            expected_types parameter.
             
         Connection Mode Best Practices:
             - Use mode="read" for all SELECT queries to leverage read connection and improve
@@ -284,29 +290,31 @@ class ManagerBase:
             
             # Read query with explicit write connection
             count = await manager.execute("mydb", "SELECT COUNT(*) FROM users", mode="write")
+            
+            # Query with custom type conversion
+            result = await manager.execute("mydb", "SELECT status, count, name, description",
+                                         expected_types=(bool, int))
+            # First column converted to bool, second to int, rest use default conversion
+            
+            # Query with selective type conversion
+            result = await manager.execute("mydb", "SELECT id, name, count",
+                                         expected_types=(None, None, int))
+            # Skip first two columns, convert third to int
         """
         conn = await self.connect(db_path, mode=mode, create_read_connection=create_read_connection and mode=="read")
         params = params or ()
+        
+        # Early escape: if expected_types is provided, temporarily change row_factory
+        original_row_factory = None
+        if expected_types is not None:
+            original_row_factory = conn.row_factory
+            conn.row_factory = custom_row_factory(expected_types)
 
-        if cursor is not None:
-            # Use the provided cursor
-            result = await try_query(
-                cursor=cursor,
-                query=query,
-                commit=False,  # IMPORTANT: never auto-commit inside exec
-                injection_values=params,
-                return_type=return_type,
-                log=log,
-                raise_on_fail=True,
-                notify_bulk=False,
-                force_notify_bulk=False,
-                convert_to_dollar=False,
-            )
-        else:
-            # Create a new cursor
-            async with conn.cursor() as new_cursor:
+        try:
+            if cursor is not None:
+                # Use the provided cursor
                 result = await try_query(
-                    cursor=new_cursor,
+                    cursor=cursor,
                     query=query,
                     commit=False,  # IMPORTANT: never auto-commit inside exec
                     injection_values=params,
@@ -317,6 +325,25 @@ class ManagerBase:
                     force_notify_bulk=False,
                     convert_to_dollar=False,
                 )
+            else:
+                # Create a new cursor
+                async with conn.cursor() as new_cursor:
+                    result = await try_query(
+                        cursor=new_cursor,
+                        query=query,
+                        commit=False,  # IMPORTANT: never auto-commit inside exec
+                        injection_values=params,
+                        return_type=return_type,
+                        log=log,
+                        raise_on_fail=True,
+                        notify_bulk=False,
+                        force_notify_bulk=False,
+                        convert_to_dollar=False,
+                    )
+        finally:
+            # Restore original row_factory if it was changed
+            if original_row_factory is not None:
+                conn.row_factory = original_row_factory
 
         # commit logic:
 

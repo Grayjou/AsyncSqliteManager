@@ -5,7 +5,7 @@ This module provides row factory functions that handle automatic type conversion
 for SQLite query results, particularly useful for converting string representations
 of integers back to int type, which is needed for IntEnum construction.
 """
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple, Optional, Callable, Type
 import sqlite3
 
 
@@ -120,3 +120,103 @@ def dict_row_factory(cursor: sqlite3.Cursor, row: Tuple) -> dict:
     """
     fields = [column[0] for column in cursor.description]
     return {key: convert_value(value) for key, value in zip(fields, row)}
+
+
+def convert_value_with_type(value: Any, expected_type: Optional[Type]) -> Any:
+    """
+    Convert a value to a specific expected type.
+    
+    Args:
+        value: The value to convert.
+        expected_type: The expected type to convert to. If None, no conversion is performed.
+        
+    Returns:
+        The converted value, or the original value if conversion is not possible or not requested.
+        
+    Examples:
+        >>> convert_value_with_type('1', bool)
+        True
+        >>> convert_value_with_type('0', bool)
+        False
+        >>> convert_value_with_type('123', int)
+        123
+        >>> convert_value_with_type('hello', int)
+        'hello'
+        >>> convert_value_with_type('123', None)
+        '123'
+    """
+    # If None type is specified, skip conversion
+    if expected_type is None:
+        return value
+    
+    # If value is None, return as-is
+    if value is None:
+        return value
+    
+    # If value is already the expected type, return as-is
+    if isinstance(value, expected_type):
+        return value
+    
+    # Special handling for bool type
+    if expected_type is bool:
+        # Convert string representations to bool
+        if isinstance(value, str):
+            if value in ('0', 'False', 'false', 'FALSE', ''):
+                return False
+            elif value in ('1', 'True', 'true', 'TRUE'):
+                return True
+        # Convert numeric types to bool
+        elif isinstance(value, (int, float)):
+            return bool(value)
+        return value
+    
+    # Try to convert to the expected type
+    try:
+        return expected_type(value)
+    except (ValueError, TypeError):
+        # If conversion fails, return original value
+        return value
+
+
+def custom_row_factory(expected_types: Optional[Tuple[Optional[Type], ...]] = None) -> Callable:
+    """
+    Create a custom row factory with expected types for each column.
+    
+    Args:
+        expected_types: A tuple of expected types for each column. Can be shorter than 
+                       the number of columns (remaining columns use automatic conversion).
+                       Use None for a column to skip conversion for that column.
+                       
+    Returns:
+        A row factory function that can be used with SQLite connections.
+        
+    Examples:
+        >>> # Convert first two columns: bool and int, leave rest as-is
+        >>> conn.row_factory = custom_row_factory((bool, int))
+        >>> cursor = conn.execute("SELECT '1', '0', 'blablabla', 'uuu'")
+        >>> cursor.fetchone()
+        (True, 0, 'blablabla', 'uuu')
+        
+        >>> # Skip first column, convert second to int
+        >>> conn.row_factory = custom_row_factory((None, int))
+        >>> cursor = conn.execute("SELECT '1', '0', 'blablabla', 'uuu'")
+        >>> cursor.fetchone()
+        ('1', 0, 'blablabla', 'uuu')
+    """
+    # Early escape if no types provided - use default conversion
+    if not expected_types:
+        return type_converting_row_factory
+    
+    def row_factory(cursor: sqlite3.Cursor, row: Tuple) -> Tuple:
+        """Custom row factory that applies expected types."""
+        result = []
+        for i, value in enumerate(row):
+            if i < len(expected_types):
+                # Apply expected type conversion
+                result.append(convert_value_with_type(value, expected_types[i]))
+            else:
+                # Use automatic conversion for remaining columns
+                result.append(convert_value(value))
+        return tuple(result)
+    
+    return row_factory

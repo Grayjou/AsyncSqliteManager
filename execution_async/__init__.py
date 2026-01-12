@@ -10,7 +10,9 @@ from .fetch_types import (
 from .row_factory import (
     convert_value,
     type_converting_row_factory,
-    dict_row_factory
+    dict_row_factory,
+    custom_row_factory,
+    convert_value_with_type
 )
 
 __all__ = (
@@ -22,5 +24,7 @@ __all__ = (
     "ReturnType",
     "convert_value",
     "type_converting_row_factory",
-    "dict_row_factory"
+    "dict_row_factory",
+    "custom_row_factory",
+    "convert_value_with_type"
 )
