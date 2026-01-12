@@ -361,14 +361,9 @@ class ManagerBase:
         # Apply type conversion post-fetch if needed and cursor was provided
         if expected_types is not None and cursor is not None and result is not None:
             factory = custom_row_factory(expected_types)
-            # Create a mock cursor for the factory
-            class MockCursor:
-                def __init__(self):
-                    self.description = None
-            mock_cursor = MockCursor()
-            
-            # Apply conversion to all rows in result
-            result = [factory(mock_cursor, row) for row in result]
+            # The factory function doesn't use the cursor parameter, but we pass None
+            # for API consistency with the row_factory signature
+            result = [factory(None, row) for row in result]
 
         # commit logic:
 
