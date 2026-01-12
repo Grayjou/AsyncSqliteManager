@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Type, Literal
+from typing import Optional, Type, Literal, Tuple
 from logging import Logger, getLogger as logging_getLogger
 from .types import QueryParams, QueryResult
 from .exceptions import TransactionError
@@ -27,6 +27,7 @@ class Transaction:
         self.logger = logger or logging_getLogger(__name__)
         self._connection: Optional[AioConnection] = None
         self._cursor: Optional[AioCursor] = None
+        self._succeeded: Optional[bool] = None  # Track transaction outcome
 
     async def __aenter__(self) -> Transaction:
         """Enter the transaction context."""
@@ -61,14 +62,18 @@ class Transaction:
             if exc_type is not None:
                 await self._connection.rollback()
                 self.logger.error(f"ROLLBACK transaction on database: {self.database_path}")
+                self._succeeded = False
             elif self.autocommit:
                 await self.manager.commit(self.database_path)
                 self.logger.info(f"COMMIT transaction on database: {self.database_path}")
+                self._succeeded = True
             else:
                 await self._connection.rollback()
                 self.logger.info(f"ROLLBACK transaction on database: {self.database_path}")
+                self._succeeded = False
         except Exception as e:
             self.logger.error(f"Failed to commit/rollback transaction: {e}")
+            self._succeeded = False
             raise
         finally:
             # Close the cursor when exiting the transaction
@@ -86,6 +91,7 @@ class Transaction:
         log: bool = False,
         override_omnilog: bool = False,
         mode : Literal["read", "write"] = "write",
+        expected_types: Optional[Tuple[Optional[Type], ...]] = None,
     ) -> QueryResult:
         return await self.manager.execute(
             db_path=self.database_path,
@@ -98,6 +104,7 @@ class Transaction:
             log=log,
             override_omnilog=override_omnilog,
             mode=mode,
+            expected_types=expected_types,
         )
 
     async def commit(self, log: bool = False, override_omnilog: bool = False) -> None:
@@ -119,3 +126,31 @@ class Transaction:
     async def release_savepoint(self, name: str) -> None:
         """Release a savepoint."""
         await self.manager.release_savepoint(self.database_path, name)
+    
+    @property
+    def succeeded(self) -> Optional[bool]:
+        """
+        Check if the transaction succeeded (committed).
+        
+        Returns:
+            True if transaction was committed, False if rolled back, None if still in progress.
+            
+        Note:
+            This property is accessible after the transaction context exits.
+        """
+        return self._succeeded
+    
+    @property
+    def failed(self) -> Optional[bool]:
+        """
+        Check if the transaction failed (rolled back).
+        
+        Returns:
+            True if transaction was rolled back, False if committed, None if still in progress.
+            
+        Note:
+            This property is accessible after the transaction context exits.
+        """
+        if self._succeeded is None:
+            return None
+        return not self._succeeded

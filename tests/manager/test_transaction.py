@@ -165,6 +165,7 @@ class TestTransaction:
             log=False,
             override_omnilog=False,
             mode="write",
+            expected_types=None,
         )
         assert result == [(1,)]
 
